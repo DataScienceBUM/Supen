@@ -1,0 +1,437 @@
+---
+import { API_ENDPOINTS } from '../data/supen-data';
+---
+
+<div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+  <!-- Encabezado del Apartado de Comentarios -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold mb-2">
+        <span class="w-2 h-2 rounded-full bg-amber-600"></span>
+        <span>Guía Técnica, Criterio Analítico & Documentación Oficial</span>
+        <span>•</span>
+        <span class="font-mono">8 Endpoints</span>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+        Comentarios Analíticos y Criterio Técnico de la API
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl leading-relaxed">
+        Espacio dedicado al análisis fiduciario, arquitectura de consumo, advertencias de rendimiento, diccionarios de variables y base legal de cada uno de los apartados de la API de la Superintendencia de Pensiones.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 text-xs self-start lg:self-auto">
+      <span class="text-slate-500 font-medium">Fuente:</span>
+      <span class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-mono text-[11px] font-bold text-slate-700">
+        SUPEN / CONASSIF
+      </span>
+    </div>
+  </div>
+
+  <!-- Barra de Selector de Endpoint -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Selecciona un apartado para consultar sus comentarios técnicos:</span>
+      <span class="text-[11px] text-slate-500 hidden sm:inline">Criterio analítico e instrucciones</span>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2" id="comments-endpoint-selector">
+      {API_ENDPOINTS.map((ep, idx) => (
+        <button
+          type="button"
+          class={`comment-ep-btn px-2.5 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex flex-col justify-between gap-1 group ${
+            idx === 0
+              ? 'bg-[#0A2540] border-[#0A2540] text-white shadow-sm ring-2 ring-blue-500/20'
+              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+          }`}
+          data-comment-ep-idx={idx}
+        >
+          <div class="flex items-center justify-between w-full">
+            <span class="font-mono text-[11px] font-bold group-hover:underline truncate">{ep.endpoint}</span>
+            <span class="text-[9px] px-1 py-0.2 rounded font-mono font-bold bg-white/20 text-current">GET</span>
+          </div>
+          <span class="text-[10px] font-sans font-medium line-clamp-1 opacity-90">{ep.nombre.split(' ')[0]}</span>
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <!-- Contenedor del Comentario y Ficha Técnica del Endpoint Seleccionado -->
+  <div class="bg-slate-50 border border-slate-200 rounded-3xl p-5 sm:p-7 space-y-6" id="comments-content-panel">
+    <!-- Encabezado del Endpoint Seleccionado -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-200">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300 font-mono font-bold text-xs">GET</span>
+          <h3 id="comment-ep-title" class="text-xl font-black text-slate-900 font-mono">
+            {API_ENDPOINTS[0].endpoint}
+          </h3>
+          <span class="text-slate-400">•</span>
+          <span id="comment-ep-name" class="text-sm font-bold text-slate-700">
+            {API_ENDPOINTS[0].nombre}
+          </span>
+        </div>
+        <p id="comment-ep-desc" class="text-xs text-slate-500 mt-1 max-w-3xl leading-relaxed">
+          {API_ENDPOINTS[0].descripcion}
+        </p>
+      </div>
+
+      <!-- Botón de Enlace Rápido al Gráfico Correspondiente -->
+      <button
+        id="btn-jump-to-chart"
+        type="button"
+        class="px-4 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-[#0A2540] font-bold text-xs transition-colors flex items-center gap-1.5 shadow-xs shrink-0"
+      >
+        <span>📊</span>
+        <span>Ver en el Observatorio Gráfico</span>
+      </button>
+    </div>
+
+    <!-- Alerta de Rendimiento si existe -->
+    <div id="comment-alert-box" class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950 font-medium hidden">
+      <div class="flex items-start gap-2.5">
+        <span class="text-base shrink-0">⚠️</span>
+        <div>
+          <strong class="text-amber-900 font-bold block mb-0.5">Aviso de Arquitectura y Rendimiento de la API:</strong>
+          <span id="comment-alert-text"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloque 1: Análisis Económico y Comportamiento Empírico -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
+      <h4 class="text-sm font-bold text-[#0A2540] uppercase tracking-wider mb-2 flex items-center gap-2">
+        <span>📈</span>
+        <span>Análisis Económico & Comportamiento Empírico</span>
+      </h4>
+      <p id="comment-analisis-text" class="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+        <!-- Rellenado por JS -->
+      </p>
+    </div>
+
+    <!-- Bloque 2: Directrices de Consumo y Buenas Prácticas -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
+      <h4 class="text-sm font-bold text-[#0A2540] uppercase tracking-wider mb-3 flex items-center gap-2">
+        <span>⚙️</span>
+        <span>Directrices Técnicas de Consumo e Integración</span>
+      </h4>
+      <ul id="comment-directrices-list" class="space-y-2 text-xs text-slate-700 list-disc list-inside leading-relaxed font-medium">
+        <!-- Rellenado por JS -->
+      </ul>
+    </div>
+
+    <!-- Bloque 3: Diccionario de Campos Clave y Variables -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
+      <h4 class="text-sm font-bold text-[#0A2540] uppercase tracking-wider mb-3 flex items-center gap-2">
+        <span>📖</span>
+        <span>Diccionario de Variables y Campos del Payload JSON</span>
+      </h4>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600">
+              <th class="py-2.5 px-3 font-sans font-bold">Campo</th>
+              <th class="py-2.5 px-3 font-sans font-bold">Tipo</th>
+              <th class="py-2.5 px-3 font-sans font-bold">Definición Técnica</th>
+              <th class="py-2.5 px-3 font-sans font-bold">Interpretación / Formato</th>
+            </tr>
+          </thead>
+          <tbody id="comment-fields-body" class="divide-y divide-slate-100 text-[11px]">
+            <!-- Rellenado por JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bloque 4: Fundamento Legal y Casos de Uso -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
+        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <span>⚖️</span>
+          <span>Base Legal y Regulatoria</span>
+        </h4>
+        <p id="comment-legal-text" class="text-xs text-slate-800 leading-relaxed font-medium">
+          <!-- Rellenado por JS -->
+        </p>
+      </div>
+
+      <div class="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
+        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <span>💡</span>
+          <span>Casos de Uso para Desarrolladores y Economistas</span>
+        </h4>
+        <ul id="comment-casos-list" class="space-y-1.5 text-xs text-slate-700 list-disc list-inside leading-relaxed font-medium">
+          <!-- Rellenado por JS -->
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { API_ENDPOINTS } from '../data/supen-data';
+
+  interface ComentarioEndpoint {
+    analisisEconomico: string;
+    directricesConsumo: string[];
+    advertenciaRendimiento?: string;
+    fundamentoLegal: string;
+    casosDeUso: string[];
+    camposExplicados: { campo: string; tipo: string; descripcion: string; nota: string }[];
+  }
+
+  // Inyectar datos de comentarios
+  const COMENTARIOS_DATA: Record<string, ComentarioEndpoint> = {
+    '/rendimiento': {
+      analisisEconomico: 'La rentabilidad del SNP se calcula mediante el método del Valor Cuota Promedio Mensual. A diferencia de las tasas nominales comerciales, la tasa real descuenta la variación del Índice de Precios al Consumidor (IPC), midiendo la verdadera preservación del poder adquisitivo a largo plazo. Los datos muestran una fuerte dispersión de hasta 1.42 puntos porcentuales en horizontes de 12 meses entre la operadora más eficiente y la más rezagada, lo que en una vida laboral de 35 años genera diferencias patrimoniales superiores al 25% en el saldo acumulado.',
+      directricesConsumo: [
+        'Periodicidad Mensual: La SUPEN publica los cortes al último día hábil de cada mes. No existen cortes diarios oficiales en este endpoint.',
+        'Parámetro Fondo: Utilizar Fondo=ROP para el régimen obligatorio (Pilar 2) o Fondo=FCL para el fondo de cesantía.',
+        'Cálculo Geométrico: Las rentabilidades anualizadas reflejan rendimientos geométricos netos de la comisión de administración vigente.'
+      ],
+      fundamentoLegal: 'Ley de Protección al Trabajador (Ley N.° 7983), Artículos 13 y 20; Reglamento de Gestión de Activos CONASSIF.',
+      casosDeUso: [
+        'Rankings públicos comparativos de desempeño fiduciario de las 6 OPCs.',
+        'Simuladores de pensión futura y modelos de asignación óptima de aportes.',
+        'Análisis econométrico de correlación entre rentabilidad real e inflación local.'
+      ],
+      camposExplicados: [
+        { campo: 'entidad', tipo: 'string', descripcion: 'Código o razón social de la OPC', nota: 'POPULAR, BN-VITAL, BCR-PENSION, BACSJ PENSIONES, CCSS-OPC, VIDA PLENA' },
+        { campo: 'tipo', tipo: 'string', descripcion: 'Modalidad de tasa calculada', nota: 'REAL (neta de inflación IPC) o NOMINAL (sin descontar inflación)' },
+        { campo: 'periodicidad', tipo: 'string', descripcion: 'Horizonte temporal de cálculo', nota: '12 MESES, 36 MESES, 60 MESES o 10 AÑOS' },
+        { campo: 'rentabilidad', tipo: 'number (%)', descripcion: 'Tasa porcentual geométrica anualizada', nota: 'Expresada en porcentaje (ej. 6.84 equivale a 6.84%)' },
+        { campo: 'fecha', tipo: 'string ISO', descripcion: 'Fecha de corte mensual', nota: 'Generalmente el último día del mes (ej. 2024-01-31T00:00:00)' }
+      ]
+    },
+    '/comision': {
+      analisisEconomico: 'El esquema de comisiones del SNP experimentó una transformación estructural histórica: en 2005 las operadoras cobraban hasta un 1.10% sobre aportes y saldos. Tras sucesivas reformas ordenadas por el CONASSIF, desde 2020 rige un tope máximo unificado del 0.35% anual cobrado exclusivamente sobre saldo administrado. Este tope redujo el Fee Drag (costo compuesto acumulado) de un -23.4% del patrimonio a un -7.5% a 35 años, preservando más de ₡1 billón de colones adicionales en los fondos de los trabajadores.',
+      directricesConsumo: [
+        'Estandarización: Todas las operadoras actualmente cobran el tope legal del 0.35% sobre saldo en el ROP.',
+        'Series Históricas: Al consultar rangos 2005-2019 se observan esquemas combinados (comisión sobre aportes + comisión sobre saldo) ya derogados.',
+        'Consultas: Se recomienda consultar con Fondo=ROP para auditar la tarifa legal obligatoria.'
+      ],
+      fundamentoLegal: 'Acuerdos del Consejo Nacional de Supervisión del Sistema Financiero (CONASSIF) sobre Topes Máximos de Comisiones de Operadoras de Pensiones.',
+      casosDeUso: [
+        'Calculadoras de costo previsional acumulado a lo largo de la carrera laboral.',
+        'Estudios comparativos internacionales de costos de administración previsional (OCDE vs. Costa Rica).',
+        'Auditoría ciudadana del cumplimiento de los topes legales fijados por CONASSIF.'
+      ],
+      camposExplicados: [
+        { campo: 'entidad', tipo: 'string', descripcion: 'Operadora evaluada', nota: 'Identificador oficial de la OPC' },
+        { campo: 'tipo', tipo: 'string', descripcion: 'Base imponible del cobro', nota: 'SALDO (base vigente), APORTE (histórico) o RENDIMIENTO' },
+        { campo: 'comisión', tipo: 'number (%)', descripcion: 'Porcentaje anual cobrado', nota: 'Vigente: 0.35% anualizado' },
+        { campo: 'codigoregimen', tipo: 'integer', descripcion: 'Código del régimen previsional', nota: '2 para ROP, 3 para FCL' }
+      ]
+    },
+    '/portafolio': {
+      analisisEconomico: 'El portafolio macro del sistema previsional presenta una alta concentración en Deuda Soberana del Ministerio de Hacienda (~58.4%), lo que genera un riesgo de concentración fiscal local (crowding-out del crédito privado). La diversificación internacional en ETFs globales (Vanguard S&P 500, MSCI ACWI) representa cerca del 21.2% de los activos, aportando exposición a renta variable de alta liquidez y cobertura cambiaria en dólares.',
+      directricesConsumo: [
+        'Volumen de Datos Moderado: Agrupa tenencias por sector, emisor, instrumento y moneda.',
+        'Filtro de Fecha: Especificar siempre fecha puntual para obtener la fotografía exacta de cierre de mes.',
+        'Monedas: Las posiciones en dólares están convertidas al tipo de cambio de referencia del BCCR a la fecha de corte.'
+      ],
+      fundamentoLegal: 'Reglamento de Inversiones de las Entidades Reguladas (CONASSIF / SUPEN). Límites máximos por emisor, sector y país.',
+      casosDeUso: [
+        'Matrices de riesgo crediticio soberano vs. riesgo de mercado internacional.',
+        'Análisis de concentración cambiaria (Colones vs. USD) en el ahorro nacional.',
+        'Monitoreo del financiamiento institucional del déficit fiscal del Gobierno Central.'
+      ],
+      camposExplicados: [
+        { campo: 'emisor_gestor', tipo: 'string', descripcion: 'Entidad emisora del título', nota: 'MINISTERIO DE HACIENDA, BCCR, VANGUARD GROUP, etc.' },
+        { campo: 'sector', tipo: 'string', descripcion: 'Sector económico institucional', nota: 'PUBLICO, EXTERNO o PRIVADO' },
+        { campo: 'moneda', tipo: 'string', descripcion: 'Divisa de denominación', nota: 'COLONES o DOLARES' },
+        { campo: 'montocolones', tipo: 'number (CRC)', descripcion: 'Valor de mercado en colones', nota: 'Valoración a precios de mercado (mark-to-market)' },
+        { campo: 'montodolares', tipo: 'number (USD)', descripcion: 'Equivalente en dólares al tipo de cambio BCCR', nota: 'Calculado con tipo de cambio de venta de referencia' }
+      ]
+    },
+    '/portafolioISIN': {
+      analisisEconomico: 'Constituye el dataset más granular y exhaustivo del sistema financiero costarricense. Publica la tenencia exacta título por título con su código ISIN de 12 caracteres (ISO 6166). Permite identificar emisiones concretas de bonos BTP de Hacienda (ej. series con vencimiento 2028 y 2034) y vehículos de inversión en el exterior como el ETF VOO (Vanguard 500) o el ETF ACWI de BlackRock.',
+      directricesConsumo: [
+        'RECOMENDACIÓN CRÍTICA: SIEMPRE especificar una única fecha de corte puntual (FechaInicio = FechaFinal).',
+        'Estructura Masiva: Una consulta sin filtros temporales retornará decenas de miles de registros y provocará errores HTTP 504 (Gateway Timeout).',
+        'Normalización ISIN: Los títulos locales inician con prefijo CRG (Gobierno) o CRB (BCCR); los instrumentos internacionales con US (Estados Unidos) o IE (Irlanda).'
+      ],
+      advertenciaRendimiento: '¡Atención al Timeout 504! Este endpoint contiene el desglose microfinanciero de cada título. Siempre define un rango de 1 solo día: FechaInicio=2024-01-31&FechaFinal=2024-01-31.',
+      fundamentoLegal: 'Normas de Transparencia y Custodia de Títulos Valores de CONASSIF / BVA (Bolsa Nacional de Valores) / SUPEN.',
+      casosDeUso: [
+        'Screener avanzado de títulos valores de deuda interna y renta variable exterior.',
+        'Cálculo de duración media ponderada (macaulay/modificada) de la cartera soberana.',
+        'Comparativa de cuota de mercado por emisión entre fondos del ROP y FCL.'
+      ],
+      camposExplicados: [
+        { campo: 'isin', tipo: 'string (12 car.)', descripcion: 'Código ISIN internacional único', nota: 'Estándar ISO 6166 para identificación inequívoca' },
+        { campo: 'emisor_gestor', tipo: 'string', descripcion: 'Emisor institucional del título', nota: 'Entidad deudora responsable del pago de cupones y principal' },
+        { campo: 'instrumento', tipo: 'string', descripcion: 'Tipo de título financiero', nota: 'DEUDA ESTANDARIZADA, ETF, ACCIONES, BONOS BCCR' },
+        { campo: 'montocolones', tipo: 'number (CRC)', descripcion: 'Valoración total en colones', nota: 'Precio de mercado de la posición en custodia' }
+      ]
+    },
+    '/LT': {
+      analisisEconomico: 'La Libre Transferencia (LT) es el mecanismo de competencia ciudadana consagrado en la Ley 7983: cualquier trabajador puede trasladar sus fondos del ROP o FCL a otra operadora tras cumplir 6 meses de permanencia. Los datos evidencian una marcada asimetría de movilidad: entidades privadas como BAC San José muestran un saldo neto positivo recurrente (captación neta de personas y capital), mientras que la operadora estatal por defecto (Popular Pensiones) registra fugas netas de cotizantes atraídos por mejores canales de servicio o rentabilidades.',
+      directricesConsumo: [
+        'Estructura Matriz Bilateral: Cada registro define una entidad de origen y columnas [OPC]_C (cantidad personas) y [OPC]_M (monto trasladado en colones).',
+        'Permanencia Legal: Los traslados se consolidan mensualmente tras validar los 6 meses de permanencia reglamentaria.',
+        'Fondo: Filtrar por Fondo=ROP para analizar el traslado del capital de retiro o Fondo=FCL para traslados de cesantía.'
+      ],
+      fundamentoLegal: 'Ley N.° 7983, Artículo 10 (Derecho a la Libre Transferencia de Fondos de Capitalización Individual).',
+      casosDeUso: [
+        'Modelos de churn rate y tasa de retención fiduciaria en el mercado previsional.',
+        'Matriz de flujo de fondos interbancarios entre banca pública y banca privada.',
+        'Análisis de la elasticidad de los traslados respecto a la rentabilidad real de los últimos 12 meses.'
+      ],
+      camposExplicados: [
+        { campo: 'entidadorigen', tipo: 'string', descripcion: 'Operadora de la que salen los recursos', nota: 'Entidad cedente del afiliado y su cuenta individual' },
+        { campo: '[OPC]_C', tipo: 'integer', descripcion: 'Cantidad de personas transferidas hacia esa OPC', nota: 'Ejemplo: POPULAR_C, BACSJ_PENSIONES_C' },
+        { campo: '[OPC]_M', tipo: 'number (CRC)', descripcion: 'Monto monetario transferido hacia esa OPC', nota: 'Capital acumulado traspasado en la liquidación mensual' },
+        { campo: 'fecha', tipo: 'string ISO', descripcion: 'Corte mensual del proceso de compensación', nota: 'Fecha de cierre de la cámara de traslados SUPEN' }
+      ]
+    },
+    '/Afiliado': {
+      analisisEconomico: 'Revela la realidad demográfica del mercado laboral formal costarricense: el sistema cuenta con más de 3.12 millones de afiliados acumulados, pero únicamente 1.41 millones cotizan activamente cada mes en la planilla SICERE de la CCSS (densidad de cotización del 45.3%). El tramo etario más representativo se sitúa entre los 31 y 45 años. Además, los datos muestran una persistente brecha salarial de género, donde los salarios promedio reportados por hombres superan entre un 3% y un 10% a los de las mujeres en todos los tramos de edad.',
+      directricesConsumo: [
+        'Afiliados vs. Aportantes: No confundir afiliados totales (stock acumulado histórico) con aportantes activos (flujo con cotización pagada en el mes).',
+        'Cruces Sociodemográficos: Permite cruzar variables de sexo (MASCULINO / FEMENINO) con rangos de edad normalizados por SUPEN.',
+        'Salario Promedio: Representa la base salarial reportada a la seguridad social sobre la cual se calcula el aporte obligatorio del 4.25%.'
+      ],
+      fundamentoLegal: 'Convenio de Intercambio de Información SICERE (CCSS) - SUPEN; Ley Constitutiva de la CCSS y Ley 7983.',
+      casosDeUso: [
+        'Proyecciones actuariales de envejecimiento poblacional y tasa de reemplazo futura.',
+        'Estudios sociolaborales de informalidad, intermitencia laboral y brecha de género.',
+        'Modelos de sostenibilidad previsional ante el cambio en la pirámide demográfica.'
+      ],
+      camposExplicados: [
+        { campo: 'entidad', tipo: 'string', descripcion: 'OPC en la que cotiza el afiliado', nota: 'Entidad administradora de la cuenta individual' },
+        { campo: 'sexo', tipo: 'string', descripcion: 'Sexo biológico registrado', nota: 'MASCULINO o FEMENINO' },
+        { campo: 'rangoedad', tipo: 'string', descripcion: 'Cohorte de edad', nota: '< 31 años, 31 a < 45, 45 a < 59, 59 a < 100, >= 100' },
+        { campo: 'afiliados', tipo: 'integer', descripcion: 'Total de personas registradas en la cartera', nota: 'Stock total de cuentas abiertas' },
+        { campo: 'aportantes', tipo: 'integer', descripcion: 'Personas con cotización efectiva en el mes', nota: 'Trabajadores activos en planilla SICERE' },
+        { campo: 'salario_o_aporte_colones', tipo: 'number (CRC)', descripcion: 'Salario o aporte medio reportado', nota: 'Base imponible cotizada en colones' }
+      ]
+    },
+    '/Beneficio': {
+      analisisEconomico: 'Documenta la fase de desacumulación del ROP: el desembolso de pensiones a trabajadores jubilados. La modalidad más elegida es la Renta Permanente (~48.5% de los beneficiarios), donde el pensionado retira periódicamente los rendimientos reales de los últimos 36 meses preservando el capital para sus herederos. La segunda es el Retiro Programado (~32.7%), donde el saldo se recalcula cada 12 meses dividiéndolo entre la expectativa de vida actuarial. El Transitorio XX de la Ley 9906 representa un retiro acelerado temporal vigente hasta 2030.',
+      directricesConsumo: [
+        'Clasificación por Modalidad: tipobeneficio agrupa las alternativas legales autorizadas por la normativa de CONASSIF.',
+        'Complementariedad: Estas pensiones son adicionales e independientes a la pensión del régimen básico (IVM de la CCSS o Magisterio).',
+        'Monto Promedio: Permite evaluar la tasa de sustitución real que el ROP está aportando a los jubilados costarricenses.'
+      ],
+      fundamentoLegal: 'Ley N.° 7983, Artículos 21 al 24; Ley N.° 9906 (Transitorio XX); Reglamento de Beneficios del SNP.',
+      casosDeUso: [
+        'Evaluación del impacto de las reformas de modalidades de retiro sobre la liquidez de los fondos.',
+        'Cálculo de tasas de reemplazo netas agregadas (Pilar 1 + Pilar 2).',
+        'Estudios actuariales sobre riesgo de longevidad en Renta Permanente vs. Renta Vitalicia.'
+      ],
+      camposExplicados: [
+        { campo: 'tipobeneficio', tipo: 'string', descripcion: 'Modalidad de retiro de pensión', nota: 'RENTA PERMANENTE, RETIRO PROGRAMADO, TRANSITORIO XX, RENTA VITALICIA' },
+        { campo: 'beneficio', tipo: 'integer', descripcion: 'Cantidad de personas beneficiarias', nota: 'Número de pensionados recibiendo pago en el mes' },
+        { campo: 'beneficiocolones', tipo: 'number (CRC)', descripcion: 'Monto total desembolsado en el mes', nota: 'Flujo financiero liquidado a los pensionados' }
+      ]
+    },
+    '/Cuenta': {
+      analisisEconomico: 'Expone los estados financieros estandarizados bajo catálogo contable oficial de la SUPEN. La cuenta 0110000000000 (Activo Neto del Fondo) refleja el patrimonio líquido de más de ₡27.4 billones custodiado para los afiliados. La cuenta 0130000000000 (Valor Cuota o NAV) constituye la variable matemática fundamental sobre la cual se calcula la rentabilidad real neta de comisiones. Las inversiones en instrumentos financieros representan más del 95% del activo total, evidenciando un apalancamiento pasivo casi nulo (<1.3%).',
+      directricesConsumo: [
+        'Catálogo Estandarizado: Utilizar códigos de cuenta oficiales de 13 dígitos para consultas precisas.',
+        'Cuentas Principales: 011... (Activo Neto), 013... (Valor Cuota), 021... (Activo Total), 022... (Pasivos), 023... (Patrimonio).',
+        'Consistencia de Cierre: Los saldos contables coinciden con los balances auditados publicados por las OPCs al cierre mensual.'
+      ],
+      fundamentoLegal: 'Catálogo de Cuentas para Entidades Administradoras de Fondos de Pensiones CONASSIF / SUPEN.',
+      casosDeUso: [
+        'Modelado de ratios de solvencia y liquidez de los fondos previsionales.',
+        'Auditoría contable independiente de balances financieros.',
+        'Seguimiento diario/mensual de la evolución de la cuota patrimonial (NAV).'
+      ],
+      camposExplicados: [
+        { campo: 'codigocuenta', tipo: 'string (13 dígitos)', descripcion: 'Código contable oficial estandarizado', nota: 'Ejemplo: 0110000000000 para Activo Neto' },
+        { campo: 'cuenta', tipo: 'string', descripcion: 'Denominación oficial de la cuenta', nota: 'Nombre oficial en el catálogo contable de SUPEN' },
+        { campo: 'montocolones', tipo: 'number (CRC)', descripcion: 'Saldo contable en colones', nota: 'Importe de cierre al último día del mes' }
+      ]
+    }
+  };
+
+  let currentCommentIdx = 0;
+
+  const commentButtons = document.querySelectorAll('.comment-ep-btn') as NodeListOf<HTMLButtonElement>;
+  const epTitle = document.getElementById('comment-ep-title') as HTMLElement;
+  const epName = document.getElementById('comment-ep-name') as HTMLElement;
+  const epDesc = document.getElementById('comment-ep-desc') as HTMLElement;
+  const alertBox = document.getElementById('comment-alert-box') as HTMLElement;
+  const alertText = document.getElementById('comment-alert-text') as HTMLElement;
+  const analisisText = document.getElementById('comment-analisis-text') as HTMLElement;
+  const directricesList = document.getElementById('comment-directrices-list') as HTMLElement;
+  const fieldsBody = document.getElementById('comment-fields-body') as HTMLElement;
+  const legalText = document.getElementById('comment-legal-text') as HTMLElement;
+  const casosList = document.getElementById('comment-casos-list') as HTMLElement;
+  const btnJumpToChart = document.getElementById('btn-jump-to-chart') as HTMLButtonElement;
+
+  function renderCommentEndpoint(idx: number) {
+    currentCommentIdx = idx;
+    const ep = API_ENDPOINTS[idx];
+    const data = COMENTARIOS_DATA[ep.endpoint as keyof typeof COMENTARIOS_DATA] || COMENTARIOS_DATA['/rendimiento'];
+
+    // Actualizar botones
+    commentButtons.forEach((btn, i) => {
+      if (i === idx) {
+        btn.className = 'comment-ep-btn px-2.5 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex flex-col justify-between gap-1 group bg-[#0A2540] border-[#0A2540] text-white shadow-sm ring-2 ring-blue-500/20';
+      } else {
+        btn.className = 'comment-ep-btn px-2.5 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex flex-col justify-between gap-1 group bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300';
+      }
+    });
+
+    epTitle.textContent = ep.endpoint;
+    epName.textContent = ep.nombre;
+    epDesc.textContent = ep.descripcion;
+
+    // Alerta de rendimiento
+    if (data.advertenciaRendimiento) {
+      alertBox.classList.remove('hidden');
+      alertText.textContent = data.advertenciaRendimiento;
+    } else {
+      alertBox.classList.add('hidden');
+    }
+
+    // Análisis económico
+    analisisText.textContent = data.analisisEconomico;
+
+    // Directrices
+    directricesList.innerHTML = data.directricesConsumo.map(d => `<li>${d}</li>`).join('');
+
+    // Diccionario de campos
+    fieldsBody.innerHTML = data.camposExplicados.map(f => `
+      <tr>
+        <td class="py-2.5 px-3 font-bold text-[#0A2540]">${f.campo}</td>
+        <td class="py-2.5 px-3 text-slate-600">${f.tipo}</td>
+        <td class="py-2.5 px-3 font-sans text-slate-800">${f.descripcion}</td>
+        <td class="py-2.5 px-3 font-sans text-slate-500">${f.nota}</td>
+      </tr>
+    `).join('');
+
+    // Base legal
+    legalText.textContent = data.fundamentoLegal;
+
+    // Casos de uso
+    casosList.innerHTML = data.casosDeUso.map(c => `<li>${c}</li>`).join('');
+  }
+
+  commentButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.getAttribute('data-comment-ep-idx') || '0');
+      renderCommentEndpoint(idx);
+    });
+  });
+
+  // Salto al Observatorio Gráfico con el endpoint seleccionado
+  if (btnJumpToChart) {
+    btnJumpToChart.addEventListener('click', () => {
+      const btnViewVisual = document.getElementById('btn-view-visual') as HTMLButtonElement;
+      if (btnViewVisual) {
+        btnViewVisual.click();
+        // Simular clic en el botón del visualizador correspondiente
+        const visButtons = document.querySelectorAll('.ep-selector-btn') as NodeListOf<HTMLButtonElement>;
+        if (visButtons[currentCommentIdx]) {
+          visButtons[currentCommentIdx].click();
+        }
+      }
+    });
+  }
+
+  // Inicializar en 0 (/rendimiento)
+  renderCommentEndpoint(0);
+</script>

@@ -1,30 +1,135 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ApiExplorer from '../components/ApiExplorer.astro';
+import ApiVisualizer from '../components/ApiVisualizer.astro';
+import ApiComments from '../components/ApiComments.astro';
 ---
 
 <BaseLayout
-  title="API OpenData y Desarrolladores | SUPEN Costa Rica"
-  description="Especificación técnica de la API REST pública de la Superintendencia de Pensiones de Costa Rica, diccionarios de datos, catálogos maestros y ejemplos en Python y R."
+  title="API OpenData, Observatorio Visual y Comentarios | SUPEN Costa Rica"
+  description="Observatorio gráfico interactivo, comentarios analíticos, criterios fiduciarios y especificación técnica de la API REST pública de la Superintendencia de Pensiones de Costa Rica."
 >
-  <div class="mb-8">
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold mb-3">
-      <span>⚡ Portal para Desarrolladores & Opendata</span>
-      <span>•</span>
-      <span>REST / JSON Público</span>
+  <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold mb-3">
+        <span>⚡ Portal OpenData, Gráficos & Comentarios Oficiales</span>
+        <span>•</span>
+        <span>REST / JSON Público</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+        Observatorio Visual, Comentarios y API SUPEN
+      </h1>
+      <p class="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed">
+        Analiza el comportamiento cuantitativo mediante visualizaciones interactivas de alta fidelidad, consulta los comentarios fiduciarios y advertencias técnicas de cada endpoint, o utiliza la consola para desarrolladores.
+      </p>
     </div>
-    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-      Documentación y Consola de la API de Estadísticas SUPEN
-    </h1>
-    <p class="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed">
-      La Superintendencia de Pensiones publica un API REST pública, abierta y gratuita sin necesidad de tokens o API keys. Integra estadísticas de rentabilidades, comisiones, carteras de inversión, movilidad y demografía en tus aplicaciones, modelos de datos o investigaciones.
-    </p>
+
+    <!-- Conmutador de 3 Vistas: Gráficos, Comentarios y Consola -->
+    <div class="inline-flex p-1 rounded-2xl bg-slate-100 border border-slate-200 text-xs shrink-0 self-start md:self-auto overflow-x-auto max-w-full">
+      <button
+        id="btn-view-visual"
+        type="button"
+        class="px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs bg-[#0A2540] text-white flex items-center gap-1.5"
+      >
+        <span>📊</span>
+        <span>Observatorio de Gráficos</span>
+      </button>
+      <button
+        id="btn-view-comments"
+        type="button"
+        class="px-3.5 py-2 rounded-xl font-bold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5"
+      >
+        <span>📝</span>
+        <span>Comentarios & Criterio</span>
+      </button>
+      <button
+        id="btn-view-console"
+        type="button"
+        class="px-3.5 py-2 rounded-xl font-bold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5"
+      >
+        <span>💻</span>
+        <span>Consola REST / JSON</span>
+      </button>
+    </div>
   </div>
 
-  <!-- Consola Interactiva -->
-  <section class="mb-12">
+  <!-- Vista 1: Observatorio Visual Interactivo -->
+  <section id="section-visualizer" class="mb-12">
+    <ApiVisualizer />
+  </section>
+
+  <!-- Vista 2: Comentarios Analíticos y Criterio Técnico (Separado) -->
+  <section id="section-comments" class="mb-12 hidden">
+    <ApiComments />
+  </section>
+
+  <!-- Vista 3: Consola Técnica para Desarrolladores -->
+  <section id="section-console" class="mb-12 hidden">
     <ApiExplorer />
   </section>
+
+  <script>
+    const btnVisual = document.getElementById('btn-view-visual') as HTMLButtonElement;
+    const btnComments = document.getElementById('btn-view-comments') as HTMLButtonElement;
+    const btnConsole = document.getElementById('btn-view-console') as HTMLButtonElement;
+    const secVisual = document.getElementById('section-visualizer') as HTMLElement;
+    const secComments = document.getElementById('section-comments') as HTMLElement;
+    const secConsole = document.getElementById('section-console') as HTMLElement;
+
+    const activeClasses = 'px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs bg-[#0A2540] text-white flex items-center gap-1.5';
+    const inactiveClasses = 'px-3.5 py-2 rounded-xl font-bold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+
+    function showSection(section: 'visual' | 'comments' | 'console') {
+      if (section === 'visual') {
+        btnVisual.className = activeClasses;
+        btnComments.className = inactiveClasses;
+        btnConsole.className = inactiveClasses;
+        secVisual.classList.remove('hidden');
+        secComments.classList.add('hidden');
+        secConsole.classList.add('hidden');
+      } else if (section === 'comments') {
+        btnComments.className = activeClasses;
+        btnVisual.className = inactiveClasses;
+        btnConsole.className = inactiveClasses;
+        secComments.classList.remove('hidden');
+        secVisual.classList.add('hidden');
+        secConsole.classList.add('hidden');
+      } else {
+        btnConsole.className = activeClasses;
+        btnVisual.className = inactiveClasses;
+        btnComments.className = inactiveClasses;
+        secConsole.classList.remove('hidden');
+        secVisual.classList.add('hidden');
+        secComments.classList.add('hidden');
+      }
+    }
+
+    if (btnVisual && btnComments && btnConsole) {
+      btnVisual.addEventListener('click', () => {
+        showSection('visual');
+        history.replaceState(null, '', '#graficos');
+      });
+      btnComments.addEventListener('click', () => {
+        showSection('comments');
+        history.replaceState(null, '', '#comentarios');
+      });
+      btnConsole.addEventListener('click', () => {
+        showSection('console');
+        history.replaceState(null, '', '#consola');
+      });
+
+      // Detección inicial por hash o query string
+      const hash = window.location.hash.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab')?.toLowerCase();
+
+      if (hash === '#comentarios' || tabParam === 'comentarios') {
+        showSection('comments');
+      } else if (hash === '#consola' || tabParam === 'consola') {
+        showSection('console');
+      }
+    }
+  </script>
 
   <!-- Catálogos Maestros de Referencia -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">

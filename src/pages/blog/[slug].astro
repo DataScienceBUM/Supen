@@ -1,0 +1,364 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Artículos recomendados (misma categoría o recientes)
+const allPosts = await getCollection('blog');
+const relatedPosts = allPosts
+  .filter((p) => p.id !== post.id && p.data.category === post.data.category)
+  .slice(0, 3);
+
+function getCategoryColor(cat: string) {
+  switch (cat) {
+    case 'operadoras':
+      return 'bg-sky-50 text-sky-800 border-sky-200';
+    case 'indices':
+      return 'bg-emerald-50 text-emerald-800 border-emerald-200';
+    case 'leyes':
+      return 'bg-purple-50 text-purple-800 border-purple-200';
+    case 'guias':
+      return 'bg-amber-50 text-amber-800 border-amber-200';
+    default:
+      return 'bg-slate-50 text-slate-800 border-slate-200';
+  }
+}
+---
+
+<BaseLayout
+  title={`${post.data.title} | Blog SUPEN Costa Rica`}
+  description={post.data.description}
+>
+  <!-- Breadcrumb -->
+  <nav class="mb-6 text-xs text-slate-500 flex items-center gap-2 flex-wrap">
+    <a href="/" class="hover:text-[#0A2540]">Inicio</a>
+    <span>/</span>
+    <a href="/blog" class="hover:text-[#0A2540]">Blog & Guías</a>
+    <span>/</span>
+    <span class="text-slate-700 font-medium">{post.data.categoryLabel}</span>
+    <span>/</span>
+    <span class="text-slate-400 truncate max-w-xs">{post.data.title}</span>
+  </nav>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <!-- Contenido Principal -->
+    <article class="lg:col-span-8 bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-10 shadow-xs">
+      <!-- Encabezado del Artículo -->
+      <header class="mb-8 pb-8 border-b border-slate-100">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          <span class={`px-3 py-1 rounded-full text-xs font-bold border ${getCategoryColor(post.data.category)}`}>
+            {post.data.categoryLabel}
+          </span>
+          <span class="text-xs text-slate-400 font-medium">
+            ⏱️ {post.data.readTimeMinutes} min de lectura
+          </span>
+          <span class="text-xs text-slate-400 font-medium">
+            📅 {post.data.publishDate.toLocaleDateString('es-CR', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </span>
+        </div>
+
+        <h1 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+          {post.data.title}
+        </h1>
+
+        <p class="text-slate-600 text-sm sm:text-base mt-4 leading-relaxed font-normal">
+          {post.data.description}
+        </p>
+
+        <!-- Autor & Metadata -->
+        <div class="mt-6 flex items-center gap-3 pt-6 border-t border-slate-100 text-xs">
+          <div class="w-9 h-9 rounded-full bg-[#0A2540] text-white flex items-center justify-center font-bold text-xs">
+            CR
+          </div>
+          <div>
+            <p class="font-bold text-slate-900">{post.data.author}</p>
+            <p class="text-slate-500 text-[11px]">Educación & Transparencia Previsional · Datos Abiertos SUPEN</p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Cuerpo del Artículo -->
+      <div class="article-content">
+        <Content />
+      </div>
+
+      <!-- Enlace Contextual a Herramienta -->
+      {post.data.relatedSimulator && (
+        <div class="mt-10 p-5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p class="text-xs font-bold text-blue-900 uppercase tracking-wider">Herramienta Interactiva Relacionada</p>
+            <p class="text-sm font-semibold text-slate-800 mt-0.5">Explora las cifras reales de este tema en nuestro observatorio</p>
+          </div>
+          <a
+            href={post.data.relatedSimulator}
+            class="px-4 py-2 rounded-xl bg-[#0A2540] text-white hover:bg-[#12375C] text-xs font-bold transition-all shrink-0"
+          >
+            {post.data.relatedSimulatorLabel || 'Ver en el Observatorio'} →
+          </a>
+        </div>
+      )}
+
+      <!-- Tags -->
+      {post.data.tags && post.data.tags.length > 0 && (
+        <div class="mt-10 pt-6 border-t border-slate-100">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-xs font-bold text-slate-400 mr-2">Etiquetas:</span>
+            {post.data.tags.map((tag: string) => (
+              <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- Botón de Retorno -->
+      <div class="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
+        <a
+          href="/blog"
+          class="inline-flex items-center gap-2 text-xs font-bold text-[#0A2540] hover:underline"
+        >
+          ← Volver a todos los artículos
+        </a>
+      </div>
+    </article>
+
+    <!-- Barra Lateral (Sidebar) -->
+    <aside class="lg:col-span-4 space-y-6">
+      <!-- Tarjeta de Llamado a la Acción -->
+      <div class="bg-gradient-to-br from-[#0A2540] to-[#0E355C] rounded-3xl p-6 text-white border border-[#0A2540] shadow-sm">
+        <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-blue-300 font-bold mb-3">
+          📊
+        </div>
+        <h3 class="text-base font-bold text-white mb-2">Simulador "Elige tu OPC"</h3>
+        <p class="text-xs text-slate-200 leading-relaxed mb-4">
+          Calcula tu pensión proyectada y compara el impacto de las diferentes operadoras sobre tu salario real.
+        </p>
+        <a
+          href="/simulador"
+          class="block text-center py-2 px-4 rounded-xl bg-white text-[#0A2540] hover:bg-slate-100 text-xs font-extrabold transition-all"
+        >
+          Probar Simulador Gratuito
+        </a>
+      </div>
+
+      <!-- Artículos Relacionados -->
+      {relatedPosts.length > 0 && (
+        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-2xs">
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">
+            Artículos Relacionados
+          </h3>
+          <div class="space-y-4">
+            {relatedPosts.map((rel) => (
+              <div class="group">
+                <a
+                  href={`/blog/${rel.id}`}
+                  class="text-xs font-bold text-slate-800 group-hover:text-[#0A2540] transition-colors leading-snug block"
+                >
+                  {rel.data.title}
+                </a>
+                <span class="text-[11px] text-slate-400 mt-1 block">
+                  {rel.data.readTimeMinutes} min · {rel.data.categoryLabel}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- Accesos Rápidos del Observatorio -->
+      <div class="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-2xs text-xs">
+        <h3 class="font-bold text-slate-900 uppercase tracking-wider mb-3">
+          Explora los Datos Oficiales
+        </h3>
+        <ul class="space-y-2 text-slate-600">
+          <li>
+            <a href="/rendimientos" class="hover:text-[#0A2540] font-semibold flex items-center justify-between">
+              <span>📈 Ranking de Rendimientos</span>
+              <span>→</span>
+            </a>
+          </li>
+          <li>
+            <a href="/comisiones" class="hover:text-[#0A2540] font-semibold flex items-center justify-between">
+              <span>💰 Comisiones y Fee Drag</span>
+              <span>→</span>
+            </a>
+          </li>
+          <li>
+            <a href="/portafolios" class="hover:text-[#0A2540] font-semibold flex items-center justify-between">
+              <span>🌐 Portafolios e Inversiones</span>
+              <span>→</span>
+            </a>
+          </li>
+          <li>
+            <a href="/transferencias" class="hover:text-[#0A2540] font-semibold flex items-center justify-between">
+              <span>🔄 Matriz de Transferencias</span>
+              <span>→</span>
+            </a>
+          </li>
+          <li>
+            <a href="/glosario" class="hover:text-[#0A2540] font-semibold flex items-center justify-between">
+              <span>📖 Glosario Previsional</span>
+              <span>→</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  /* Tipografía y estilos para el cuerpo del artículo */
+  .article-content {
+    color: #334155;
+    font-size: 0.9375rem;
+    line-height: 1.75;
+  }
+
+  .article-content h1 {
+    display: none; /* Ya se renderiza en el header del layout */
+  }
+
+  .article-content h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .article-content h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+
+  .article-content p {
+    margin-bottom: 1.25rem;
+  }
+
+  .article-content strong {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .article-content ul, .article-content ol {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+  }
+
+  .article-content ul {
+    list-style-type: disc;
+  }
+
+  .article-content ol {
+    list-style-type: decimal;
+  }
+
+  .article-content li {
+    margin-bottom: 0.5rem;
+  }
+
+  .article-content blockquote {
+    border-left: 4px solid #0A2540;
+    background-color: #f8fafc;
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0 0.75rem 0.75rem 0;
+    font-style: normal;
+    color: #1e293b;
+  }
+
+  .article-content blockquote p {
+    margin-bottom: 0;
+  }
+
+  .article-content pre {
+    background-color: #061526;
+    color: #e2e8f0;
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    font-size: 0.8125rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #1e293b;
+  }
+
+  .article-content code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .article-content :not(pre) > code {
+    background-color: #f1f5f9;
+    color: #0A2540;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.85em;
+    font-weight: 600;
+  }
+
+  .article-content table {
+    width: 100%;
+    margin-bottom: 1.75rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    font-size: 0.8125rem;
+  }
+
+  .article-content th {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-weight: 700;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .article-content td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+  }
+
+  .article-content tr:last-child td {
+    border-bottom: none;
+  }
+
+  .article-content a {
+    color: #0A2540;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .article-content a:hover {
+    color: #2563eb;
+  }
+
+  .article-content hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 2rem 0;
+  }
+</style>

@@ -5,6 +5,12 @@ import OpdBadge from '../components/OpdBadge.astro';
 import InteractiveSimulator from '../components/InteractiveSimulator.astro';
 import { KPI_SISTEMA, OPERADORAS, RENTABILIDADES } from '../data/supen-data';
 import { formatColones, formatDolares, formatNumero } from '../utils/formatters';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('blog');
+const recentPosts = allPosts
+  .sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime())
+  .slice(0, 3);
 ---
 
 <BaseLayout
@@ -46,8 +52,8 @@ import { formatColones, formatDolares, formatNumero } from '../utils/formatters'
             href="/api"
             class="px-4 py-2.5 rounded-xl bg-[#061526] hover:bg-slate-900 border border-slate-700 text-slate-200 font-mono text-xs font-bold transition-all flex items-center gap-1.5"
           >
-            <span class="text-emerald-400">⚡</span>
-            <span>API OpenData</span>
+            <span class="text-emerald-400">📊</span>
+            <span>Observatorio & API</span>
           </a>
         </div>
       </div>
@@ -216,6 +222,63 @@ import { formatColones, formatDolares, formatNumero } from '../utils/formatters'
           </p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Sección de Blog & Guías Previsionales Destacadas -->
+  <section class="py-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <div class="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A2540] uppercase tracking-wider mb-1">
+          <span>📚 Educación & Análisis Ciudadano</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          Blog Previsional & Guías para el Afiliado
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
+          Artículos en profundidad sobre las 6 operadoras, fórmulas de rentabilidad, comisiones y leyes.
+        </p>
+      </div>
+      <a
+        href="/blog"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0A2540] font-bold text-xs transition-colors self-start sm:self-auto"
+      >
+        <span>Ver todos los artículos ({allPosts.length})</span>
+        <span>→</span>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {recentPosts.map((post) => (
+        <article class="bg-white border border-slate-200/90 rounded-2xl p-5 hover:border-slate-300 hover:shadow-xs transition-all flex flex-col justify-between shadow-2xs">
+          <div>
+            <div class="flex items-center justify-between mb-2.5 text-xs">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#0A2540] border border-blue-200">
+                {post.data.categoryLabel}
+              </span>
+              <span class="text-slate-400 font-medium text-[11px]">
+                {post.data.readTimeMinutes} min
+              </span>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900 mb-1.5 leading-snug group">
+              <a href={`/blog/${post.id}`} class="hover:text-[#0A2540] transition-colors">
+                {post.data.title}
+              </a>
+            </h3>
+            <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+              {post.data.description}
+            </p>
+          </div>
+          <div class="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-slate-400 text-[11px]">
+              {post.data.publishDate.toLocaleDateString('es-CR', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+            <a href={`/blog/${post.id}`} class="font-bold text-[#0A2540] hover:underline text-xs">
+              Leer →
+            </a>
+          </div>
+        </article>
+      ))}
     </div>
   </section>
 

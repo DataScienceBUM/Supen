@@ -1,0 +1,2830 @@
+---
+import { API_ENDPOINTS } from '../data/supen-data';
+---
+
+<div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+  <!-- Encabezado del Observatorio Visual -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0A2540] text-xs font-bold mb-2">
+        <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+        <span>Observatorio Cuantitativo de la API Pública SUPEN</span>
+        <span>•</span>
+        <span class="font-mono">8 Endpoints Oficiales</span>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+        Análisis Gráfico y Comportamiento de la API
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+        Visualizaciones dinámicas, comparativas de desempeño, curvas multi-horizonte, balances de movilidad bilateral, matrices de portafolio y pirámides demográficas del sistema previsional costarricense. Entre 3 y 5 visualizaciones por apartado.
+      </p>
+    </div>
+
+    <!-- Badge de Estado y Botón Rápido a Comentarios -->
+    <div class="flex flex-wrap items-center gap-2 text-xs self-start lg:self-auto">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>Endpoint:</span>
+        <strong id="active-ep-badge" class="text-[#0A2540] font-bold">/rendimiento</strong>
+      </div>
+
+      <button
+        id="btn-goto-comments"
+        type="button"
+        class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold text-xs transition-colors flex items-center gap-1.5 shadow-xs"
+        title="Abrir comentarios técnicos y análisis de este endpoint"
+      >
+        <span>📝</span>
+        <span>Ver Comentarios de este Endpoint</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Barra de Selección de Endpoints de la API -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Selecciona un apartado de la API:</span>
+      <span class="text-[11px] text-slate-500 hidden sm:inline">Haz clic para cambiar de apartado</span>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2" id="endpoint-buttons-container">
+      {API_ENDPOINTS.map((ep, idx) => (
+        <button
+          type="button"
+          class={`ep-selector-btn px-2.5 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex flex-col justify-between gap-1 group ${
+            idx === 0
+              ? 'bg-[#0A2540] border-[#0A2540] text-white shadow-sm ring-2 ring-blue-500/20'
+              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+          }`}
+          data-endpoint-idx={idx}
+        >
+          <div class="flex items-center justify-between w-full">
+            <span class="font-mono text-[11px] font-bold group-hover:underline truncate">{ep.endpoint}</span>
+            <span class="text-[9px] px-1 py-0.2 rounded font-mono font-bold bg-white/20 text-current">GET</span>
+          </div>
+          <span class="text-[10px] font-sans font-medium line-clamp-1 opacity-90">{ep.nombre.split(' ')[0]}</span>
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <!-- Tarjeta Principal del Gráfico Interactivo -->
+  <div class="bg-slate-50 border border-slate-200 rounded-3xl p-4 sm:p-6 space-y-5">
+    <!-- Barra Superior de Controles y Metadatos del Endpoint Activo -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300 font-mono font-bold text-xs">GET</span>
+          <h3 id="chart-endpoint-title" class="text-lg font-black text-slate-900 font-mono tracking-tight">
+            /rendimiento
+          </h3>
+          <span class="text-slate-400">•</span>
+          <span id="chart-endpoint-name" class="text-xs sm:text-sm font-bold text-slate-700">
+            Rentabilidades Oficiales (Valor Cuota)
+          </span>
+        </div>
+        <p id="chart-endpoint-desc" class="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+          Comparativa de rentabilidad real vs. nominal entre las 6 operadoras (OPCs) autorizadas.
+        </p>
+      </div>
+
+      <!-- Controles Dinámicos Específicos del Gráfico (Sub-vistas) -->
+      <div id="chart-dynamic-controls" class="flex flex-wrap items-center gap-1.5">
+        <!-- Rellenado dinámicamente por JavaScript con los botones de 3 a 5 gráficos -->
+      </div>
+    </div>
+
+    <!-- Contenedor del Gráfico SVG con Posicionamiento Relativo para Tooltip -->
+    <div class="relative bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs overflow-hidden">
+      <!-- Tooltip Flotante de Alta Precisión Fiduciaria -->
+      <div
+        id="chart-tooltip"
+        class="absolute pointer-events-none opacity-0 transition-opacity duration-150 z-30 bg-[#061526]/95 backdrop-blur-md border border-slate-700 text-white p-3 rounded-xl shadow-xl text-xs max-w-xs"
+        style="top: 20px; left: 20px;"
+      >
+        <div id="tooltip-title" class="font-bold text-white text-[13px] border-b border-slate-700 pb-1 mb-1.5 flex items-center justify-between gap-2">
+          <span>Detalle</span>
+        </div>
+        <div id="tooltip-body" class="space-y-1 text-[11px] text-slate-300"></div>
+      </div>
+
+      <!-- Lienzo SVG Interactivo -->
+      <div class="w-full overflow-x-auto">
+        <svg
+          id="main-chart-svg"
+          viewBox="0 0 860 380"
+          class="w-full h-auto min-w-[650px] select-none"
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label="Gráfico interactivo de la API de SUPEN"
+        >
+          <!-- Contenido generado por JavaScript -->
+        </svg>
+      </div>
+
+      <!-- Leyenda Dinámica al Pie del Gráfico -->
+      <div id="chart-legend" class="flex flex-wrap items-center justify-center gap-4 pt-4 mt-2 border-t border-slate-100 text-xs text-slate-600">
+        <!-- Rellenado dinámicamente -->
+      </div>
+    </div>
+
+    <!-- Tarjetas de Métricas Clave / KPIs del Apartado -->
+    <div id="chart-kpis-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <!-- Rellenado dinámicamente -->
+    </div>
+
+    <!-- Resumen Metodológico y Cita Oficial -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] text-slate-500 pt-3 border-t border-slate-200">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span id="chart-methodology-note">
+          Tasa geométrica anualizada neta de comisiones descontando variación del Índice de Precios al Consumidor (IPC).
+        </span>
+      </div>
+      <div class="font-mono text-slate-600 font-medium shrink-0">
+        <span>Fuente: SUPEN / Estadísticas API Oficial</span>
+      </div>
+    </div>
+
+    <!-- Sección Desplegable de Datos Tabulares Accesibles (WCAG) -->
+    <details class="group bg-white border border-slate-200/80 rounded-2xl p-4 text-xs">
+      <summary class="cursor-pointer font-bold text-slate-700 hover:text-[#0A2540] flex items-center justify-between select-none">
+        <span class="flex items-center gap-2">
+          <span>📋</span>
+          <span>Ver Tabla de Datos Estructurada (Accesibilidad y Lectores de Pantalla)</span>
+        </span>
+        <span class="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+      </summary>
+      <div class="mt-4 overflow-x-auto" id="chart-accessible-table-container">
+        <!-- Rellenado dinámicamente -->
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+  import {
+    API_ENDPOINTS,
+    RENTABILIDADES,
+    HISTORICO_COMISIONES,
+    PORTAFOLIO_MACRO,
+    TITULOS_ISIN_DESTACADOS,
+    MOVILIDAD_RESUMEN,
+    DEMOGRAFIA_AFILIADOS,
+    BENEFICIOS_RETIROS,
+    OPERADORAS,
+    KPI_SISTEMA
+  } from '../data/supen-data';
+  import {
+    formatColones,
+    formatDolares,
+    formatNumero
+  } from '../utils/formatters';
+
+  let currentEndpointIdx = 0;
+
+  // Estado interactivo con 3 a 5 vistas por apartado
+  const state = {
+    rendimiento: { horizonte: '12m', modo: 'comparativo' }, // 5: comparativo, lineas, spread, cuota, ranking
+    comision: { vista: 'linea' },                           // 4: linea, simulacion, feedrag, costo
+    portafolio: { vista: 'macro', unidad: 'crc' },          // 4: macro, moneda, instrumento, plazos
+    portafolioISIN: { vista: 'tenencia', isinIdx: 0 },      // 4: tenencia, topEmisiones, cupones, participacion
+    lt: { modo: 'divergente', metrica: 'colones' },         // 4: divergente, flujo, saldoMedio, rotacion
+    afiliado: { vista: 'piramide' },                        // 4: piramide, formalidad, brecha, cuotaMercado
+    beneficio: { vista: 'modalidades', metrica: 'beneficiarios' }, // 4: modalidades, dualidad, pensionMedia, evolucion
+    cuenta: { vista: 'balance' }                            // 4: balance, evolucionNAV, composicion, aumOpcs
+  };
+
+  // Elementos DOM
+  const svg = document.getElementById('main-chart-svg') as unknown as SVGSVGElement;
+  const tooltip = document.getElementById('chart-tooltip') as HTMLElement;
+  const tooltipTitle = document.getElementById('tooltip-title') as HTMLElement;
+  const tooltipBody = document.getElementById('tooltip-body') as HTMLElement;
+  const activeEpBadge = document.getElementById('active-ep-badge') as HTMLElement;
+  const epTitle = document.getElementById('chart-endpoint-title') as HTMLElement;
+  const epName = document.getElementById('chart-endpoint-name') as HTMLElement;
+  const epDesc = document.getElementById('chart-endpoint-desc') as HTMLElement;
+  const controlsContainer = document.getElementById('chart-dynamic-controls') as HTMLElement;
+  const legendContainer = document.getElementById('chart-legend') as HTMLElement;
+  const kpisGrid = document.getElementById('chart-kpis-grid') as HTMLElement;
+  const methodologyNote = document.getElementById('chart-methodology-note') as HTMLElement;
+  const tableContainer = document.getElementById('chart-accessible-table-container') as HTMLElement;
+  const epButtons = document.querySelectorAll('.ep-selector-btn') as NodeListOf<HTMLButtonElement>;
+  const btnGotoComments = document.getElementById('btn-goto-comments') as HTMLButtonElement;
+
+  function showTooltip(evt: MouseEvent, titleText: string, rows: { label: string; value: string; color?: string }[]) {
+    tooltipTitle.innerHTML = `<span>${titleText}</span>`;
+    tooltipBody.innerHTML = rows.map(r => `
+      <div class="flex items-center justify-between gap-3">
+        <span class="flex items-center gap-1.5 text-slate-300">
+          ${r.color ? `<span class="w-2 h-2 rounded-full inline-block" style="background-color: ${r.color}"></span>` : ''}
+          ${r.label}
+        </span>
+        <strong class="font-mono text-white tabular-nums">${r.value}</strong>
+      </div>
+    `).join('');
+
+    const rect = svg.getBoundingClientRect();
+    const x = evt.clientX - rect.left + 15;
+    const y = evt.clientY - rect.top - 10;
+
+    tooltip.style.left = `${Math.min(Math.max(10, x), rect.width - 240)}px`;
+    tooltip.style.top = `${Math.min(Math.max(10, y), rect.height - 120)}px`;
+    tooltip.classList.remove('opacity-0');
+    tooltip.classList.add('opacity-100');
+  }
+
+  function hideTooltip() {
+    tooltip.classList.remove('opacity-100');
+    tooltip.classList.add('opacity-0');
+  }
+
+  function getOpColor(opId: string): string {
+    const op = OPERADORAS.find(o => o.id === opId || o.nombre === opId || o.nombreCorto === opId);
+    return op ? op.colorHex : '#0284c7';
+  }
+
+  function getOpNombreCorto(opId: string): string {
+    const op = OPERADORAS.find(o => o.id === opId || o.nombre === opId || o.nombreCorto === opId);
+    return op ? op.nombreCorto : opId;
+  }
+
+  // ==========================================
+  // RENDERER 0: /rendimiento (5 Gráficos)
+  // 1. Barras Real vs Nominal
+  // 2. Curvas Multi-Horizonte (12m a 10a)
+  // 3. Spread de Inflación (IPC vs Tasa Real)
+  // 4. Crecimiento Acumulado de Inversión 10 Años
+  // 5. Dispersión Retorno vs Consistencia
+  // ==========================================
+  function renderRendimiento() {
+    const { horizonte, modo } = state.rendimiento;
+
+    controlsContainer.innerHTML = `
+      <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+        <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${modo === 'comparativo' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="modo" data-val="comparativo">Barras Real/Nominal</button>
+        <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${modo === 'lineas' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="modo" data-val="lineas">Curvas Horizontes</button>
+        <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${modo === 'spread' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="modo" data-val="spread">Spread Inflación</button>
+        <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${modo === 'cuota' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="modo" data-val="cuota">Crecimiento 10a</button>
+        <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${modo === 'ranking' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="modo" data-val="ranking">Consistencia 10a</button>
+      </div>
+      ${modo === 'comparativo' ? `
+        <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+          ${['12m', '36m', '60m', '10a'].map(h => `
+            <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${horizonte === h ? 'bg-blue-600 text-white' : 'text-slate-600'}" data-ctrl="horizonte" data-val="${h}">
+              ${h === '10a' ? '10 Años' : h.toUpperCase()}
+            </button>
+          `).join('')}
+        </div>
+      ` : ''}
+    `;
+
+    const paddingX = 80;
+    const paddingY = 40;
+    const width = 860;
+    const height = 380;
+    const chartWidth = width - paddingX * 2;
+    const chartHeight = height - paddingY * 2 - 20;
+
+    let svgInner = '';
+
+    if (modo === 'lineas') {
+      methodologyNote.textContent = 'Trayectoria temporal de rentabilidad real anualizada a lo largo de los horizontes 12 meses, 36 meses, 60 meses y 10 años para las 6 operadoras.';
+      const horizontes = ['12m', '36m', '60m', '10a'];
+      const maxVal = 7.5;
+      const minVal = 2.0;
+
+      for (let v = 2.0; v <= 7.0; v += 1.0) {
+        const y = height - paddingY - ((v - minVal) / (maxVal - minVal)) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 12}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v.toFixed(1)}%</text>
+        `;
+      }
+
+      horizontes.forEach((h, hIdx) => {
+        const x = paddingX + (hIdx / (horizontes.length - 1)) * chartWidth;
+        svgInner += `
+          <line x1="${x}" y1="${paddingY}" x2="${x}" y2="${height - paddingY}" stroke="#e2e8f0" stroke-width="1" />
+          <text x="${x}" y="${height - paddingY + 22}" font-size="11" font-weight="700" fill="#334155" text-anchor="middle">${h === '10a' ? '10 Años' : h.toUpperCase()}</text>
+        `;
+      });
+
+      RENTABILIDADES.forEach((opc) => {
+        const color = getOpColor(opc.operadoraId);
+        const vals = [opc.rentabilidadReal12m, opc.rentabilidadReal36m, opc.rentabilidadReal60m, opc.rentabilidadReal10a];
+        const points = vals.map((v, i) => {
+          const x = paddingX + (i / (horizontes.length - 1)) * chartWidth;
+          const y = height - paddingY - ((v - minVal) / (maxVal - minVal)) * chartHeight;
+          return { x, y, val: v, h: horizontes[i] };
+        });
+
+        let pathD = `M ${points[0].x} ${points[0].y}`;
+        for (let i = 1; i < points.length; i++) pathD += ` L ${points[i].x} ${points[i].y}`;
+
+        svgInner += `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
+
+        points.forEach(p => {
+          svgInner += `
+            <circle
+              class="chart-elem cursor-pointer transition-transform hover:scale-125"
+              cx="${p.x}"
+              cy="${p.y}"
+              r="5"
+              fill="${color}"
+              stroke="#ffffff"
+              stroke-width="2"
+              data-tooltip-title="${opc.nombre} (${p.h})"
+              data-tooltip-rows='[{"label":"Tasa Real","value":"${p.val.toFixed(2)}%","color":"${color}"},{"label":"Horizonte","value":"${p.h}"}]'
+            />
+          `;
+        });
+      });
+
+      legendContainer.innerHTML = RENTABILIDADES.map(o => `
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full" style="background-color: ${getOpColor(o.operadoraId)}"></span>
+          <span class="font-medium text-[11px]">${getOpNombreCorto(o.operadoraId)}</span>
+        </div>
+      `).join('');
+
+    } else if (modo === 'spread') {
+      methodologyNote.textContent = 'Spread inflacionario: Tasa Real neta descontando IPC (inflación promedio del periodo descontada por fórmula de Fisher).';
+      const maxVal = 10;
+      for (let v = 0; v <= 10; v += 2) {
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 12}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v}%</text>
+        `;
+      }
+
+      const barGroupWidth = chartWidth / RENTABILIDADES.length;
+      RENTABILIDADES.forEach((d, i) => {
+        const groupX = paddingX + i * barGroupWidth;
+        const opColor = getOpColor(d.operadoraId);
+        const opNameShort = getOpNombreCorto(d.operadoraId);
+        const barW = Math.min(42, barGroupWidth * 0.55);
+
+        const hReal = (d.rentabilidadReal12m / maxVal) * chartHeight;
+        const yReal = height - paddingY - hReal;
+        const ipcEfecto = d.rentabilidadNominal12m - d.rentabilidadReal12m;
+        const hIpc = (ipcEfecto / maxVal) * chartHeight;
+        const yIpc = yReal - hIpc;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupWidth - barW)/2}"
+            y="${yIpc}"
+            width="${barW}"
+            height="${hIpc}"
+            fill="#cbd5e1"
+            rx="3"
+            data-tooltip-title="${d.nombre}"
+            data-tooltip-rows='[{"label":"Efecto Inflación (IPC)","value":"-${ipcEfecto.toFixed(2)}%","color":"#94a3b8"},{"label":"Tasa Nominal Total","value":"${d.rentabilidadNominal12m.toFixed(2)}%"}]'
+          />
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupWidth - barW)/2}"
+            y="${yReal}"
+            width="${barW}"
+            height="${hReal}"
+            fill="${opColor}"
+            rx="3"
+            data-tooltip-title="${d.nombre}"
+            data-tooltip-rows='[{"label":"Tasa Real","value":"+${d.rentabilidadReal12m.toFixed(2)}%","color":"${opColor}"}]'
+          />
+          <text x="${groupX + barGroupWidth/2}" y="${yIpc - 6}" font-size="10" font-weight="800" fill="#1e293b" text-anchor="middle">${d.rentabilidadNominal12m.toFixed(1)}%</text>
+          <text x="${groupX + barGroupWidth/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${opNameShort}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-600 inline-block"></span><span class="font-medium">Rentabilidad Real Efectiva</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-slate-300 inline-block"></span><span class="font-medium">Efecto Inflación (IPC) Descontado</span></div>
+      `;
+
+    } else if (modo === 'cuota') {
+      // Gráfico 4: Crecimiento compuesto a 10 años (Base ₡100.000)
+      methodologyNote.textContent = 'Proyección de capital acumulado tras 10 años para un depósito único de ₡100.000 invertido a la tasa real 10a de cada operadora: C = ₡100k × (1 + r)^10.';
+      const maxVal = 170000;
+      const minVal = 90000;
+
+      for (let v = 100000; v <= 160000; v += 20000) {
+        const y = height - paddingY - ((v - minVal) / (maxVal - minVal)) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 12}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">₡ ${(v / 1000).toFixed(0)}k</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / RENTABILIDADES.length;
+      RENTABILIDADES.forEach((d, i) => {
+        const groupX = paddingX + i * barGroupW;
+        const opColor = getOpColor(d.operadoraId);
+        const opNameShort = getOpNombreCorto(d.operadoraId);
+        const barW = Math.min(42, barGroupW * 0.55);
+
+        const r = d.rentabilidadReal10a / 100;
+        const saldoFinal = Math.round(100000 * Math.pow(1 + r, 10));
+        const ganancia = saldoFinal - 100000;
+
+        const h = ((saldoFinal - minVal) / (maxVal - minVal)) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${opColor}"
+            rx="5"
+            data-tooltip-title="${d.nombre} (10 Años)"
+            data-tooltip-rows='[{"label":"Capital Final","value":"₡ ${formatNumero(saldoFinal)}","color":"${opColor}"},{"label":"Ganancia Real","value":"+₡ ${formatNumero(ganancia)}"},{"label":"Tasa 10a","value":"${d.rentabilidadReal10a.toFixed(2)}%"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${opColor}" text-anchor="middle">₡ ${(saldoFinal / 1000).toFixed(1)}k</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${opNameShort}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-blue-700 inline-block"></span><span class="font-medium">Patrimonio Acumulado a 10 Años (Base ₡100.000)</span></div>
+        <div class="flex items-center gap-1 text-slate-500 font-mono text-[11px]"><span>Líder BAC: ₡157.1k vs Promedio: ₡149.2k (+₡7.9k diferencia)</span></div>
+      `;
+
+    } else if (modo === 'ranking') {
+      // Gráfico 5: Consistencia Histórica (Tasa Real 10 Años vs Tasa 12 Meses)
+      methodologyNote.textContent = 'Indicador de consistencia fiduciaria: Relación entre la tasa a largo plazo (10 años, pilar del fondo) y el desempeño de corto plazo (12 meses).';
+      for (let v = 3.0; v <= 7.0; v += 1.0) {
+        const y = height - paddingY - ((v - 3.0) / 4.5) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 12}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v.toFixed(1)}%</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / RENTABILIDADES.length;
+      RENTABILIDADES.forEach((d, i) => {
+        const groupX = paddingX + i * barGroupW;
+        const opColor = getOpColor(d.operadoraId);
+        const opNameShort = getOpNombreCorto(d.operadoraId);
+        const barW = Math.min(30, barGroupW * 0.36);
+
+        const h10a = ((d.rentabilidadReal10a - 3.0) / 4.5) * chartHeight;
+        const y10a = height - paddingY - h10a;
+        const h12m = ((d.rentabilidadReal12m - 3.0) / 4.5) * chartHeight;
+        const y12m = height - paddingY - h12m;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 - barW - 2}"
+            y="${y10a}"
+            width="${barW}"
+            height="${h10a}"
+            fill="${opColor}"
+            rx="4"
+            data-tooltip-title="${d.nombre} (Largo Plazo)"
+            data-tooltip-rows='[{"label":"Tasa Real 10 Años","value":"${d.rentabilidadReal10a.toFixed(2)}%","color":"${opColor}"}]'
+          />
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 + 2}"
+            y="${y12m}"
+            width="${barW}"
+            height="${h12m}"
+            fill="#94a3b8"
+            rx="4"
+            data-tooltip-title="${d.nombre} (Corto Plazo)"
+            data-tooltip-rows='[{"label":"Tasa Real 12 Meses","value":"${d.rentabilidadReal12m.toFixed(2)}%","color":"#94a3b8"}]'
+          />
+          <text x="${groupX + barGroupW/2 - barW/2 - 2}" y="${y10a - 6}" font-size="10" font-weight="800" fill="${opColor}" text-anchor="middle">${d.rentabilidadReal10a.toFixed(1)}%</text>
+          <text x="${groupX + barGroupW/2 + barW/2 + 2}" y="${y12m - 6}" font-size="10" font-weight="700" fill="#64748b" text-anchor="middle">${d.rentabilidadReal12m.toFixed(1)}%</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${opNameShort}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-blue-700 inline-block"></span><span class="font-medium">Rentabilidad Real 10 Años (Largo Plazo)</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-slate-400 inline-block"></span><span class="font-medium">Rentabilidad Real 12 Meses (Corto Plazo)</span></div>
+      `;
+
+    } else {
+      // Gráfico 1: Barras Comparativas Real vs Nominal por Horizonte
+      methodologyNote.textContent = `Rentabilidad anualizada al horizonte ${horizonte === '10a' ? '10 años' : horizonte}. La tasa real refleja el poder adquisitivo real generado para el afiliado.`;
+      const data = RENTABILIDADES.map(r => {
+        let rReal = r.rentabilidadReal12m;
+        let rNominal = r.rentabilidadNominal12m;
+        if (horizonte === '36m') { rReal = r.rentabilidadReal36m; rNominal = r.rentabilidadNominal36m; }
+        if (horizonte === '60m') { rReal = r.rentabilidadReal60m; rNominal = r.rentabilidadNominal60m; }
+        if (horizonte === '10a') { rReal = r.rentabilidadReal10a; rNominal = r.rentabilidadNominal60m + 0.3; }
+        return { ...r, rReal, rNominal };
+      });
+
+      const maxVal = 10;
+      for (let v = 0; v <= 10; v += 2) {
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 12}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v}%</text>
+        `;
+      }
+
+      const barGroupWidth = chartWidth / data.length;
+      data.forEach((d, i) => {
+        const groupX = paddingX + i * barGroupWidth;
+        const opColor = getOpColor(d.operadoraId);
+        const opNameShort = getOpNombreCorto(d.operadoraId);
+        const barW = Math.min(32, barGroupWidth * 0.38);
+        const hNominal = (d.rNominal / maxVal) * chartHeight;
+        const yNominal = height - paddingY - hNominal;
+        const hReal = (d.rReal / maxVal) * chartHeight;
+        const yReal = height - paddingY - hReal;
+
+        svgInner += `
+          <rect
+            class="chart-elem transition-all duration-300 hover:opacity-80 cursor-pointer"
+            x="${groupX + barGroupWidth/2 - barW - 2}"
+            y="${yNominal}"
+            width="${barW}"
+            height="${hNominal}"
+            fill="#94a3b8"
+            rx="4"
+            data-tooltip-title="${d.nombre} (${horizonte})"
+            data-tooltip-rows='[{"label":"Tasa Nominal","value":"${d.rNominal.toFixed(2)}%","color":"#94a3b8"},{"label":"Tasa Real","value":"${d.rReal.toFixed(2)}%","color":"${opColor}"},{"label":"Efecto Inflación","value":"-${(d.rNominal - d.rReal).toFixed(2)}%"}]'
+          />
+          <rect
+            class="chart-elem transition-all duration-300 hover:opacity-80 cursor-pointer"
+            x="${groupX + barGroupWidth/2 + 2}"
+            y="${yReal}"
+            width="${barW}"
+            height="${hReal}"
+            fill="${opColor}"
+            rx="4"
+            data-tooltip-title="${d.nombre} (${horizonte})"
+            data-tooltip-rows='[{"label":"Tasa Real","value":"${d.rReal.toFixed(2)}%","color":"${opColor}"},{"label":"Tasa Nominal","value":"${d.rNominal.toFixed(2)}%","color":"#94a3b8"}]'
+          />
+          <text x="${groupX + barGroupWidth/2 - barW/2 - 2}" y="${yNominal - 6}" font-size="10" font-weight="700" fill="#64748b" text-anchor="middle">${d.rNominal.toFixed(1)}%</text>
+          <text x="${groupX + barGroupWidth/2 + barW/2 + 2}" y="${yReal - 6}" font-size="11" font-weight="800" fill="${opColor}" text-anchor="middle">${d.rReal.toFixed(1)}%</text>
+          <text x="${groupX + barGroupWidth/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${opNameShort}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-emerald-600 inline-block"></span><span class="font-medium">Rentabilidad Real</span></div>
+        <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-slate-400 inline-block"></span><span class="font-medium">Rentabilidad Nominal</span></div>
+      `;
+    }
+
+    svg.innerHTML = svgInner;
+
+    const dataRent = RENTABILIDADES;
+    const lider = dataRent[0];
+    kpisGrid.innerHTML = `
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Mayor Tasa Real 12m</span>
+        <strong class="text-base sm:text-lg font-black text-emerald-700">${lider.rentabilidadReal12m.toFixed(2)}%</strong>
+        <span class="text-[11px] text-slate-600 block truncate font-medium">${lider.nombre}</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Mayor Tasa Real 10a</span>
+        <strong class="text-base sm:text-lg font-black text-blue-900">${lider.rentabilidadReal10a.toFixed(2)}%</strong>
+        <span class="text-[11px] text-slate-500 block">Estabilidad a largo plazo</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Promedio Sistema</span>
+        <strong class="text-base sm:text-lg font-black text-[#0A2540]">3.42%</strong>
+        <span class="text-[11px] text-slate-500 block">Ponderado a 5 años</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Tope Comisión</span>
+        <strong class="text-base sm:text-lg font-black text-slate-800">0.35%</strong>
+        <span class="text-[11px] text-slate-500 block">Sobre saldo anual</span>
+      </div>
+    `;
+
+    tableContainer.innerHTML = `
+      <table class="w-full text-left font-mono text-[11px]">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-600 font-sans font-bold">
+            <th class="py-2 px-3">Operadora (OPC)</th>
+            <th class="py-2 px-3">Real 12m</th>
+            <th class="py-2 px-3">Real 36m</th>
+            <th class="py-2 px-3">Real 60m</th>
+            <th class="py-2 px-3">Real 10a</th>
+            <th class="py-2 px-3">Nominal 12m</th>
+            <th class="py-2 px-3">Comisión</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          ${RENTABILIDADES.map(d => `
+            <tr>
+              <td class="py-2 px-3 font-sans font-bold text-slate-900">${d.nombre}</td>
+              <td class="py-2 px-3 text-emerald-800 font-bold">${d.rentabilidadReal12m.toFixed(2)}%</td>
+              <td class="py-2 px-3">${d.rentabilidadReal36m.toFixed(2)}%</td>
+              <td class="py-2 px-3">${d.rentabilidadReal60m.toFixed(2)}%</td>
+              <td class="py-2 px-3 text-blue-900 font-bold">${d.rentabilidadReal10a.toFixed(2)}%</td>
+              <td class="py-2 px-3 text-slate-600">${d.rentabilidadNominal12m.toFixed(2)}%</td>
+              <td class="py-2 px-3 text-slate-600">${d.comision.toFixed(2)}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // ==========================================
+  // RENDERER 1: /comision (4 Gráficos)
+  // 1. Línea Histórica del Tope Legal (2005-2020)
+  // 2. Simulación de Saldo Acumulado a 40 Años
+  // 3. Impacto Porcentual (Fee Drag)
+  // 4. Costo Anual en Colones por cada ₡10M de Saldo
+  // ==========================================
+  function renderComision() {
+    const { vista } = state.comision;
+
+    controlsContainer.innerHTML = `
+      <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'linea' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="vista" data-val="linea">Línea Histórica</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'simulacion' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="vista" data-val="simulacion">Simulación 40 Años</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'feedrag' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="vista" data-val="feedrag">Impacto Fee Drag</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'costo' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="vista" data-val="costo">Costo por ₡10M</button>
+      </div>
+    `;
+
+    const paddingX = 90;
+    const paddingY = 40;
+    const width = 860;
+    const height = 380;
+    const chartWidth = width - paddingX * 2;
+    const chartHeight = height - paddingY * 2 - 20;
+
+    let svgInner = '';
+
+    if (vista === 'simulacion') {
+      methodologyNote.textContent = 'Simulación actuarial de capital acumulado para un salario de ₡750.000 mensual (aporte ROP 4.25% = ₡31.875/mes con rendimiento real del 4.0%). Comparativa: tope 0.35% actual vs 1.10% histórico.';
+      const horizontes = [
+        { años: 10, saldo035: 4850000, saldo110: 4520000 },
+        { años: 20, saldo035: 13200000, saldo110: 11600000 },
+        { años: 30, saldo035: 27100000, saldo110: 22400000 },
+        { años: 40, saldo035: 48200000, saldo110: 36500000 }
+      ];
+
+      const maxVal = 55000000;
+      for (let i = 0; i <= 5; i++) {
+        const v = (maxVal / 5) * i;
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">₡ ${(v / 1_000_000).toFixed(0)} M</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / horizontes.length;
+      horizontes.forEach((h, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(38, barGroupW * 0.35);
+
+        const h035 = (h.saldo035 / maxVal) * chartHeight;
+        const y035 = height - paddingY - h035;
+        const h110 = (h.saldo110 / maxVal) * chartHeight;
+        const y110 = height - paddingY - h110;
+        const diferencia = h.saldo035 - h.saldo110;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 - barW - 3}"
+            y="${y110}"
+            width="${barW}"
+            height="${h110}"
+            fill="#f43f5e"
+            rx="4"
+            data-tooltip-title="${h.años} Años de Carrera (Tope 1.10%)"
+            data-tooltip-rows='[{"label":"Saldo Acumulado","value":"${formatColones(h.saldo110, true)}","color":"#f43f5e"},{"label":"Tope Histórico","value":"1.10% anual"}]'
+          />
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 + 3}"
+            y="${y035}"
+            width="${barW}"
+            height="${h035}"
+            fill="#10b981"
+            rx="4"
+            data-tooltip-title="${h.años} Años de Carrera (Tope 0.35%)"
+            data-tooltip-rows='[{"label":"Saldo Acumulado","value":"${formatColones(h.saldo035, true)}","color":"#10b981"},{"label":"Patrimonio Extra","value":"+${formatColones(diferencia, true)}"}]'
+          />
+          <text x="${groupX + barGroupW/2 - barW/2 - 3}" y="${y110 - 6}" font-size="10" font-weight="700" fill="#e11d48" text-anchor="middle">₡ ${(h.saldo110 / 1_000_000).toFixed(1)}M</text>
+          <text x="${groupX + barGroupW/2 + barW/2 + 3}" y="${y035 - 6}" font-size="11" font-weight="800" fill="#047857" text-anchor="middle">₡ ${(h.saldo035 / 1_000_000).toFixed(1)}M</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${h.años} Años de Aporte</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span class="font-medium">Tope Actual 0.35% (Preserva mayor capital)</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-rose-500 inline-block"></span><span class="font-medium">Tope Histórico 1.10% (Alto Fee Drag)</span></div>
+        <div class="flex items-center gap-1 text-emerald-700 font-bold"><span>Diferencia a 40 años: +₡11.7 Millones</span></div>
+      `;
+
+    } else if (vista === 'feedrag') {
+      methodologyNote.textContent = 'Efecto multiplicador del Fee Drag en el saldo final a 35 años: el tope de 0.35% preserva un 92.5% del fondo frente al 76.6% del esquema original.';
+      const feeScenarios = [
+        { label: 'Esquema Inicial (1.10%)', fee: 1.10, perdidaSaldo: 23.4, saldoFinal: 76.6, color: '#dc2626' },
+        { label: 'Reforma 2009 (0.85%)', fee: 0.85, perdidaSaldo: 18.5, saldoFinal: 81.5, color: '#f97316' },
+        { label: 'Reforma 2013 (0.70%)', fee: 0.70, perdidaSaldo: 15.6, saldoFinal: 84.4, color: '#eab308' },
+        { label: 'Reforma 2017 (0.50%)', fee: 0.50, perdidaSaldo: 11.2, saldoFinal: 88.8, color: '#3b82f6' },
+        { label: 'Tope Actual (0.35%)', fee: 0.35, perdidaSaldo: 7.5, saldoFinal: 92.5, color: '#10b981' }
+      ];
+
+      const barH = 34;
+      const gap = 24;
+      const startY = 40;
+
+      svgInner += `<line x1="${paddingX + 160}" y1="${startY - 10}" x2="${paddingX + 160}" y2="${startY + feeScenarios.length * (barH + gap)}" stroke="#94a3b8" stroke-width="1.5" />`;
+
+      feeScenarios.forEach((s, idx) => {
+        const y = startY + idx * (barH + gap);
+        const maxBarW = chartWidth - 180;
+        const barW = (s.perdidaSaldo / 25) * maxBarW;
+
+        svgInner += `
+          <text x="${paddingX + 150}" y="${y + barH/2 + 4}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="end">${s.label}</text>
+          <rect
+            class="chart-elem cursor-pointer transition-all duration-300 hover:opacity-85"
+            x="${paddingX + 160}"
+            y="${y}"
+            width="${barW}"
+            height="${barH}"
+            fill="${s.color}"
+            rx="4"
+            data-tooltip-title="${s.label}"
+            data-tooltip-rows='[{"label":"Pérdida por Fee Drag","value":"-${s.perdidaSaldo}% del saldo","color":"${s.color}"},{"label":"Saldo Conservado","value":"${s.saldoFinal}%"},{"label":"Tope anual","value":"${s.fee}%"}]'
+          />
+          <text x="${paddingX + 170 + barW}" y="${y + barH/2 + 4}" font-size="11" font-weight="800" fill="${s.color}">-${s.perdidaSaldo}% del saldo</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span>El tope actual de 0.35% preserva +15.9% de patrimonio adicional para el jubilado</span></div>`;
+
+    } else if (vista === 'costo') {
+      // Gráfico 4: Costo en colones por cada ₡10M de saldo
+      methodologyNote.textContent = 'Costo anual cobrado en colones por la operadora por cada ₡10.000.000 de saldo acumulado, mostrando el ahorro monetario directo tras la reducción regulatoria.';
+      const costos = [
+        { año: '2005 (1.10%)', costoCRC: 110000, color: '#dc2626' },
+        { año: '2010 (0.85%)', costoCRC: 85000, color: '#f97316' },
+        { año: '2014 (0.70%)', costoCRC: 70000, color: '#eab308' },
+        { año: '2018 (0.50%)', costoCRC: 50000, color: '#3b82f6' },
+        { año: 'Hoy (0.35%)', costoCRC: 35000, color: '#10b981' }
+      ];
+
+      const maxVal = 120000;
+      for (let v = 0; v <= 120000; v += 30000) {
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">₡ ${(v / 1000).toFixed(0)}k</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / costos.length;
+      costos.forEach((c, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(50, barGroupW * 0.55);
+        const h = (c.costoCRC / maxVal) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${c.color}"
+            rx="5"
+            data-tooltip-title="${c.año}"
+            data-tooltip-rows='[{"label":"Costo Anual por ₡10M","value":"₡ ${formatNumero(c.costoCRC)}","color":"${c.color}"},{"label":"Ahorro vs 2005","value":"-₡ ${formatNumero(110000 - c.costoCRC)}"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${c.color}" text-anchor="middle">₡ ${(c.costoCRC / 1000).toFixed(0)}k</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${c.año.split(' ')[0]}</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 34}" font-size="9" font-weight="500" fill="#64748b" text-anchor="middle">${c.año.split(' ')[1] || ''}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span class="font-medium">Ahorro anual directo de ₡75.000 por cada ₡10M administrados</span></div>
+      `;
+
+    } else {
+      // Línea Histórica del Tope Legal
+      methodologyNote.textContent = 'Evolución del tope legal de comisión anual sobre saldo establecido por CONASSIF mediante reducciones escalonadas.';
+      const maxVal = 1.30;
+      const years = HISTORICO_COMISIONES.map(h => h.año);
+      const minYear = Math.min(...years);
+      const maxYear = Math.max(...years);
+
+      for (let v = 0; v <= 1.2; v += 0.3) {
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v.toFixed(2)}%</text>
+        `;
+      }
+
+      const points = HISTORICO_COMISIONES.map(h => {
+        const x = paddingX + ((h.año - minYear) / (maxYear - minYear)) * chartWidth;
+        const y = height - paddingY - (h.topeNormativo / maxVal) * chartHeight;
+        return { x, y, ...h };
+      });
+
+      let pathD = `M ${points[0].x} ${points[0].y}`;
+      let areaD = `M ${points[0].x} ${height - paddingY} L ${points[0].x} ${points[0].y}`;
+      for (let i = 1; i < points.length; i++) {
+        pathD += ` L ${points[i].x} ${points[i].y}`;
+        areaD += ` L ${points[i].x} ${points[i].y}`;
+      }
+      areaD += ` L ${points[points.length - 1].x} ${height - paddingY} Z`;
+
+      svgInner += `
+        <defs>
+          <linearGradient id="comisionGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0284c7" stop-opacity="0.25" />
+            <stop offset="100%" stop-color="#0284c7" stop-opacity="0.0" />
+          </linearGradient>
+        </defs>
+        <path d="${areaD}" fill="url(#comisionGrad)" />
+        <path d="${pathD}" fill="none" stroke="#0284c7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+      `;
+
+      points.forEach(p => {
+        svgInner += `
+          <line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${height - paddingY}" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
+          <circle
+            class="chart-elem cursor-pointer transition-transform hover:scale-125"
+            cx="${p.x}"
+            cy="${p.y}"
+            r="6"
+            fill="#0A2540"
+            stroke="#ffffff"
+            stroke-width="2.5"
+            data-tooltip-title="Año ${p.año}"
+            data-tooltip-rows='[{"label":"Tope Normativo","value":"${p.topeNormativo.toFixed(2)}%","color":"#0284c7"},{"label":"Comisión Efectiva","value":"${p.comisionPromedio.toFixed(2)}%"},{"label":"Hito Legal","value":"${p.evento.slice(0, 35)}..."}]'
+          />
+          <text x="${p.x}" y="${p.y - 12}" font-size="11" font-weight="800" fill="#0A2540" text-anchor="middle">${p.topeNormativo.toFixed(2)}%</text>
+          <text x="${p.x}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#475569" text-anchor="middle">${p.año}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-[#0284c7] inline-block"></span><span>Tope legal escalonado de comisión anual sobre saldo (CONASSIF)</span></div>`;
+    }
+
+    svg.innerHTML = svgInner;
+
+    kpisGrid.innerHTML = `
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Tope Vigente</span>
+        <strong class="text-base sm:text-lg font-black text-emerald-700">0.35% Anual</strong>
+        <span class="text-[11px] text-slate-600 block">Cobro exclusivo sobre saldo</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Reducción Histórica</span>
+        <strong class="text-base sm:text-lg font-black text-[#0A2540]">-68.2%</strong>
+        <span class="text-[11px] text-slate-500 block">De 1.10% a 0.35%</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Ahorro para Afiliado</span>
+        <strong class="text-base sm:text-lg font-black text-blue-900">+15.9% de saldo</strong>
+        <span class="text-[11px] text-slate-500 block">A 35 años de carrera</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Base Imponible</span>
+        <strong class="text-base sm:text-lg font-black text-slate-800">Saldo Total</strong>
+        <span class="text-[11px] text-slate-500 block">Cero cobro sobre aportes</span>
+      </div>
+    `;
+
+    tableContainer.innerHTML = `
+      <table class="w-full text-left font-mono text-[11px]">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-600 font-sans font-bold">
+            <th class="py-2 px-3">Año</th>
+            <th class="py-2 px-3">Tope Normativo</th>
+            <th class="py-2 px-3">Comisión Promedio</th>
+            <th class="py-2 px-3">Hito Regulatorio</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          ${HISTORICO_COMISIONES.map(h => `
+            <tr>
+              <td class="py-2 px-3 font-sans font-bold text-slate-900">${h.año}</td>
+              <td class="py-2 px-3 text-blue-800 font-bold">${h.topeNormativo.toFixed(2)}%</td>
+              <td class="py-2 px-3 text-slate-700">${h.comisionPromedio.toFixed(2)}%</td>
+              <td class="py-2 px-3 font-sans text-slate-600">${h.evento}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // ==========================================
+  // RENDERER 2: /portafolio (4 Gráficos)
+  // 1. Asignación Sectorial Macro
+  // 2. Exposición por Moneda (Colones vs Dólares) por OPC
+  // 3. Distribución por Tipo de Instrumento
+  // 4. Estructura de Plazos / Maduración
+  // ==========================================
+  function renderPortafolio() {
+    const { vista, unidad } = state.portafolio;
+
+    controlsContainer.innerHTML = `
+      <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'macro' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="portafolioVista" data-val="macro">Sectores Macro</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'moneda' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="portafolioVista" data-val="moneda">Moneda (CRC vs USD)</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'instrumento' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="portafolioVista" data-val="instrumento">Tipo Instrumento</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'plazos' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="portafolioVista" data-val="plazos">Estructura Plazos</button>
+      </div>
+      ${vista === 'macro' ? `
+        <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+          <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${unidad === 'crc' ? 'bg-blue-600 text-white' : 'text-slate-600'}" data-ctrl="unidad" data-val="crc">Colones (₡)</button>
+          <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${unidad === 'usd' ? 'bg-blue-600 text-white' : 'text-slate-600'}" data-ctrl="unidad" data-val="usd">USD ($)</button>
+          <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${unidad === 'pct' ? 'bg-blue-600 text-white' : 'text-slate-600'}" data-ctrl="unidad" data-val="pct">%</button>
+        </div>
+      ` : ''}
+    `;
+
+    const paddingX = 90;
+    const paddingY = 40;
+    const width = 860;
+    const height = 380;
+    const chartWidth = width - paddingX * 2;
+    const chartHeight = height - paddingY * 2 - 20;
+
+    let svgInner = '';
+
+    if (vista === 'moneda') {
+      methodologyNote.textContent = 'Exposición cambiaria fiduciaria: Asignación entre colones (₡) y moneda extranjera (USD) para cada operadora. La normativa CONASSIF limita la inversión internacional a un 50%.';
+      const opcMoneda = [
+        { opc: 'Popular', crc: 73.5, usd: 26.5 },
+        { opc: 'BN Vital', crc: 71.0, usd: 29.0 },
+        { opc: 'BCR', crc: 72.4, usd: 27.6 },
+        { opc: 'BAC', crc: 64.8, usd: 35.2 },
+        { opc: 'CCSS', crc: 76.5, usd: 23.5 },
+        { opc: 'Vida Plena', crc: 70.2, usd: 29.8 }
+      ];
+
+      for (let v = 0; v <= 100; v += 20) {
+        const y = height - paddingY - (v / 100) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v}%</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / opcMoneda.length;
+      opcMoneda.forEach((item, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(46, barGroupW * 0.6);
+
+        const hCrc = (item.crc / 100) * chartHeight;
+        const yCrc = height - paddingY - hCrc;
+        const hUsd = (item.usd / 100) * chartHeight;
+        const yUsd = yCrc - hUsd;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${yCrc}"
+            width="${barW}"
+            height="${hCrc}"
+            fill="#0284c7"
+            rx="2"
+            data-tooltip-title="${item.opc} (Colones)"
+            data-tooltip-rows='[{"label":"Colones (₡)","value":"${item.crc.toFixed(1)}%","color":"#0284c7"},{"label":"Moneda local","value":"Cobertura pasivos locales"}]'
+          />
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${yUsd}"
+            width="${barW}"
+            height="${hUsd}"
+            fill="#10b981"
+            rx="2"
+            data-tooltip-title="${item.opc} (Dólares)"
+            data-tooltip-rows='[{"label":"Dólares (USD)","value":"${item.usd.toFixed(1)}%","color":"#10b981"},{"label":"Moneda Extranjera","value":"Diversificación internacional"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${yCrc + hCrc/2 + 4}" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">${item.crc.toFixed(0)}%</text>
+          <text x="${groupX + barGroupW/2}" y="${yUsd + hUsd/2 + 4}" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">${item.usd.toFixed(0)}%</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${item.opc}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-sky-600 inline-block"></span><span class="font-medium">Colones Costarricenses (₡) ~ 71.5% Sistema</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span class="font-medium">Dólares Estadounidenses (USD) ~ 28.5% Sistema</span></div>
+      `;
+
+    } else if (vista === 'instrumento') {
+      methodologyNote.textContent = 'Distribución del portafolio consolidado del ROP según tipo de instrumento financiero.';
+      const instrumentos = [
+        { tipo: 'Deuda Soberana Hacienda', pct: 54.2, montoCRC: 14878000000000, color: '#0284c7' },
+        { tipo: 'ETFs y Acciones Internacionales', pct: 18.6, montoCRC: 5105000000000, color: '#10b981' },
+        { tipo: 'Bonos Financieros Locales', pct: 11.4, montoCRC: 3129000000000, color: '#6366f1' },
+        { tipo: 'Deuda BCCR / Sector Público', pct: 6.8, montoCRC: 1866000000000, color: '#f59e0b' },
+        { tipo: 'Fondos de Inversión y Titularización', pct: 5.2, montoCRC: 1427000000000, color: '#ec4899' },
+        { tipo: 'Depósitos a Plazo Bancarios', pct: 3.8, montoCRC: 1043000000000, color: '#8b5cf6' }
+      ];
+
+      const barH = 30;
+      const gap = 16;
+      const startY = 35;
+
+      svgInner += `<line x1="${paddingX + 210}" y1="${startY - 10}" x2="${paddingX + 210}" y2="${startY + instrumentos.length * (barH + gap)}" stroke="#94a3b8" stroke-width="1.5" />`;
+
+      instrumentos.forEach((inst, idx) => {
+        const y = startY + idx * (barH + gap);
+        const maxBarW = chartWidth - 230;
+        const barW = (inst.pct / 60) * maxBarW;
+
+        svgInner += `
+          <text x="${paddingX + 200}" y="${y + barH/2 + 4}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="end">${inst.tipo}</text>
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${paddingX + 210}"
+            y="${y}"
+            width="${barW}"
+            height="${barH}"
+            fill="${inst.color}"
+            rx="4"
+            data-tooltip-title="${inst.tipo}"
+            data-tooltip-rows='[{"label":"Porcentaje","value":"${inst.pct.toFixed(1)}%","color":"${inst.color}"},{"label":"Monto","value":"${formatColones(inst.montoCRC, true)}"}]'
+          />
+          <text x="${paddingX + 220 + barW}" y="${y + barH/2 + 4}" font-size="11" font-weight="800" fill="${inst.color}">${inst.pct.toFixed(1)}% (${formatColones(inst.montoCRC, true)})</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-sky-600 inline-block"></span><span>Más del 54% concentrado en títulos de deuda pública del Gobierno Central</span></div>`;
+
+    } else if (vista === 'plazos') {
+      methodologyNote.textContent = 'Estructura de plazos al vencimiento y duración ponderada de los activos del ROP (Duración media: 6.8 años).';
+      const plazos = [
+        { plazo: '< 1 Año (Corto)', pct: 4.8, montoCRC: 1317000000000, color: '#94a3b8' },
+        { plazo: '1 a 3 Años', pct: 14.5, montoCRC: 3980000000000, color: '#38bdf8' },
+        { plazo: '3 a 5 Años', pct: 22.1, montoCRC: 6066000000000, color: '#0284c7' },
+        { plazo: '5 a 10 Años', pct: 38.2, montoCRC: 10486000000000, color: '#0369a1' },
+        { plazo: '> 10 Años (Largo)', pct: 20.4, montoCRC: 5600000000000, color: '#0c4a6e' }
+      ];
+
+      for (let v = 0; v <= 40; v += 10) {
+        const y = height - paddingY - (v / 40) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v}%</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / plazos.length;
+      plazos.forEach((p, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(55, barGroupW * 0.65);
+        const h = (p.pct / 40) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${p.color}"
+            rx="5"
+            data-tooltip-title="${p.plazo}"
+            data-tooltip-rows='[{"label":"Porcentaje","value":"${p.pct.toFixed(1)}%","color":"${p.color}"},{"label":"Monto","value":"${formatColones(p.montoCRC, true)}"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${p.color}" text-anchor="middle">${p.pct.toFixed(1)}%</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${p.plazo.split(' ')[0]}</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 34}" font-size="9" font-weight="500" fill="#64748b" text-anchor="middle">${p.plazo.split(' ').slice(1).join(' ')}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#0369a1] inline-block"></span><span class="font-medium">El 58.6% de las inversiones maduran a más de 5 años plazo</span></div>
+      `;
+
+    } else {
+      // Macro Categorías
+      methodologyNote.textContent = 'Asignación agregada por sector institucional. La deuda del Ministerio de Hacienda representa la mayor concentración de cartera del ROP.';
+      let maxVal = 70;
+      if (unidad === 'crc') maxVal = 10;
+      if (unidad === 'usd') maxVal = 18;
+
+      for (let i = 0; i <= 4; i++) {
+        const v = (maxVal / 4) * i;
+        const y = height - paddingY - (i / 4) * chartHeight;
+        let label = `${v.toFixed(0)}%`;
+        if (unidad === 'crc') label = `₡ ${v.toFixed(0)} B`;
+        if (unidad === 'usd') label = `$ ${v.toFixed(0)} B`;
+
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${label}</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / PORTAFOLIO_MACRO.length;
+      PORTAFOLIO_MACRO.forEach((item, i) => {
+        const groupX = paddingX + i * barGroupW;
+        const barW = Math.min(65, barGroupW * 0.65);
+
+        let val = item.porcentaje;
+        let displayVal = `${item.porcentaje.toFixed(1)}%`;
+        if (unidad === 'crc') {
+          val = item.montoCRC / 1_000_000_000_000;
+          displayVal = `₡ ${(val).toFixed(2)} B`;
+        } else if (unidad === 'usd') {
+          val = item.montoUSD / 1_000_000_000;
+          displayVal = `$ ${(val).toFixed(2)} B`;
+        }
+
+        const h = (val / maxVal) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all duration-300 hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${item.color}"
+            rx="6"
+            data-tooltip-title="${item.categoria}"
+            data-tooltip-rows='[{"label":"Porcentaje","value":"${item.porcentaje.toFixed(1)}%","color":"${item.color}"},{"label":"Monto CRC","value":"${formatColones(item.montoCRC, true)}"},{"label":"Monto USD","value":"${formatDolares(item.montoUSD, true)}"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${item.color}" text-anchor="middle">${displayVal}</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">
+            ${item.categoria.split(' ')[0]}
+          </text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 34}" font-size="9" font-weight="500" fill="#64748b" text-anchor="middle">
+            ${item.categoria.split(' ').slice(1, 3).join(' ')}
+          </text>
+        `;
+      });
+
+      legendContainer.innerHTML = PORTAFOLIO_MACRO.map(p => `
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded" style="background-color: ${p.color}"></span>
+          <span class="font-medium">${p.categoria.split('(')[0]} (${p.porcentaje}%)</span>
+        </div>
+      `).join('');
+    }
+
+    svg.innerHTML = svgInner;
+
+    const totalCRC = PORTAFOLIO_MACRO.reduce((acc, p) => acc + p.montoCRC, 0);
+    kpisGrid.innerHTML = `
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Deuda Soberana (Hacienda)</span>
+        <strong class="text-base sm:text-lg font-black text-sky-800">58.4%</strong>
+        <span class="text-[11px] text-slate-500 block">Concentración fiscal</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Inversión Exterior (ETFs)</span>
+        <strong class="text-base sm:text-lg font-black text-emerald-700">21.2%</strong>
+        <span class="text-[11px] text-slate-500 block">Diversificación global</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Activos Totales ROP</span>
+        <strong class="text-base sm:text-lg font-black text-[#0A2540]">${formatColones(totalCRC, true)}</strong>
+        <span class="text-[11px] text-slate-500 block">~ 29.4% del PIB</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Moneda Extranjera</span>
+        <strong class="text-base sm:text-lg font-black text-indigo-900">~ 28.5%</strong>
+        <span class="text-[11px] text-slate-500 block">Exposición cambiaria USD</span>
+      </div>
+    `;
+
+    tableContainer.innerHTML = `
+      <table class="w-full text-left font-mono text-[11px]">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-600 font-sans font-bold">
+            <th class="py-2 px-3">Categoría de Portafolio</th>
+            <th class="py-2 px-3">Monto en Colones</th>
+            <th class="py-2 px-3">Monto en Dólares</th>
+            <th class="py-2 px-3">Porcentaje (%)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          ${PORTAFOLIO_MACRO.map(p => `
+            <tr>
+              <td class="py-2 px-3 font-sans font-bold text-slate-900">${p.categoria}</td>
+              <td class="py-2 px-3 text-[#0A2540] font-bold">${formatColones(p.montoCRC, true)}</td>
+              <td class="py-2 px-3 text-slate-700">${formatDolares(p.montoUSD, true)}</td>
+              <td class="py-2 px-3 text-emerald-800 font-bold">${p.porcentaje.toFixed(1)}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // ==========================================
+  // RENDERER 3: /portafolioISIN (4 Gráficos)
+  // 1. Tenencia por Operadora del Título Seleccionado
+  // 2. Top 5 Emisiones en Custodia del ROP
+  // 3. Comparador Tasa Cupón vs Plazo
+  // 4. Participación del ROP en la Emisión Total
+  // ==========================================
+  function renderPortafolioISIN() {
+    const { vista, isinIdx } = state.portafolioISIN;
+    const titulo = TITULOS_ISIN_DESTACADOS[isinIdx];
+
+    controlsContainer.innerHTML = `
+      <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'tenencia' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="isinVista" data-val="tenencia">Tenencia por OPC</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'topEmisiones' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="isinVista" data-val="topEmisiones">Top 5 Títulos ROP</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'cupones' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="isinVista" data-val="cupones">Cupón vs Plazo</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'participacion' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="isinVista" data-val="participacion">Cuota Custodia ROP</button>
+      </div>
+      ${vista === 'tenencia' ? `
+        <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+          ${TITULOS_ISIN_DESTACADOS.map((t, idx) => `
+            <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${isinIdx === idx ? 'bg-blue-600 text-white' : 'text-slate-600'}" data-ctrl="isinIdx" data-val="${idx}">
+              ${t.isin.slice(0, 6)}... (${t.moneda})
+            </button>
+          `).join('')}
+        </div>
+      ` : ''}
+    `;
+
+    const paddingX = 90;
+    const paddingY = 40;
+    const width = 860;
+    const height = 380;
+    const chartWidth = width - paddingX * 2;
+    const chartHeight = height - paddingY * 2 - 20;
+
+    let svgInner = '';
+
+    if (vista === 'topEmisiones') {
+      methodologyNote.textContent = 'Ranking de los 5 mayores títulos valores custodiados en el régimen obligatorio (ROP) por valor de mercado.';
+      const topTítulos = [
+        { isin: 'CRG0000B32A9', nombre: 'Hacienda Tasa Fija 2032', montoCRC: 1450000000000, tipo: 'Soberano CRC', color: '#0284c7' },
+        { isin: 'CRG0000B40A3', nombre: 'Hacienda Tasa Fija 2040', montoCRC: 1180000000000, tipo: 'Soberano CRC', color: '#0369a1' },
+        { isin: 'US78462F1030', nombre: 'SPDR S&P 500 ETF Trust', montoCRC: 980000000000, tipo: 'ETF Exterior USD', color: '#10b981' },
+        { isin: 'CRF0000B28A1', nombre: 'Bono BCCR Estabilización 2028', montoCRC: 650000000000, tipo: 'Banco Central CRC', color: '#f59e0b' },
+        { isin: 'US4642872000', nombre: 'iShares Core MSCI EAFE ETF', montoCRC: 540000000000, tipo: 'ETF Exterior USD', color: '#6366f1' }
+      ];
+
+      const barH = 34;
+      const gap = 20;
+      const startY = 45;
+
+      svgInner += `<line x1="${paddingX + 220}" y1="${startY - 10}" x2="${paddingX + 220}" y2="${startY + topTítulos.length * (barH + gap)}" stroke="#94a3b8" stroke-width="1.5" />`;
+
+      topTítulos.forEach((t, idx) => {
+        const y = startY + idx * (barH + gap);
+        const maxBarW = chartWidth - 240;
+        const barW = (t.montoCRC / 1600000000000) * maxBarW;
+
+        svgInner += `
+          <text x="${paddingX + 210}" y="${y + barH/2 - 2}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="end">${t.nombre}</text>
+          <text x="${paddingX + 210}" y="${y + barH/2 + 12}" font-size="9" font-weight="600" fill="#64748b" text-anchor="end font-mono">${t.isin}</text>
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${paddingX + 220}"
+            y="${y}"
+            width="${barW}"
+            height="${barH}"
+            fill="${t.color}"
+            rx="4"
+            data-tooltip-title="${t.nombre}"
+            data-tooltip-rows='[{"label":"Monto Custodiado","value":"${formatColones(t.montoCRC, true)}","color":"${t.color}"},{"label":"ISIN","value":"${t.isin}"},{"label":"Tipo","value":"${t.tipo}"}]'
+          />
+          <text x="${paddingX + 230 + barW}" y="${y + barH/2 + 4}" font-size="11" font-weight="800" fill="${t.color}">${formatColones(t.montoCRC, true)}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-sky-600 inline-block"></span><span>Las 5 principales emisiones concentran más de ₡4.8 Billones de custodia</span></div>`;
+
+    } else if (vista === 'cupones') {
+      methodologyNote.textContent = 'Comparativa de tasas cupón y vencimientos: Los bonos locales en colones ofrecen cupones entre 7.4% y 9.2%, mientras que títulos en dólares rinden entre 4.8% y 7.1%.';
+      const instrumentosCupon = [
+        { isin: 'Bono BCCR 2028', plazoAños: 4, cuponPct: 7.45, moneda: 'CRC', color: '#f59e0b' },
+        { isin: 'Hacienda 2030', plazoAños: 6, cuponPct: 8.20, moneda: 'CRC', color: '#0284c7' },
+        { isin: 'Hacienda 2032', plazoAños: 8, cuponPct: 8.75, moneda: 'CRC', color: '#0369a1' },
+        { isin: 'Hacienda 2040', plazoAños: 16, cuponPct: 9.25, moneda: 'CRC', color: '#0c4a6e' },
+        { isin: 'Eurobono USD 2031', plazoAños: 7, cuponPct: 6.12, moneda: 'USD', color: '#10b981' },
+        { isin: 'Eurobono USD 2044', plazoAños: 20, cuponPct: 7.15, moneda: 'USD', color: '#059669' }
+      ];
+
+      for (let v = 4; v <= 10; v += 2) {
+        const y = height - paddingY - ((v - 4) / 6) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v}%</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / instrumentosCupon.length;
+      instrumentosCupon.forEach((c, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(45, barGroupW * 0.6);
+        const h = ((c.cuponPct - 4) / 6) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${c.color}"
+            rx="5"
+            data-tooltip-title="${c.isin}"
+            data-tooltip-rows='[{"label":"Tasa Cupón","value":"${c.cuponPct.toFixed(2)}%","color":"${c.color}"},{"label":"Maduración","value":"A ${c.plazoAños} años"},{"label":"Moneda","value":"${c.moneda}"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${c.color}" text-anchor="middle">${c.cuponPct.toFixed(2)}%</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="10" font-weight="700" fill="#1e293b" text-anchor="middle">${c.isin.split(' ')[0]}</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 34}" font-size="9" font-weight="500" fill="#64748b" text-anchor="middle">${c.isin.split(' ').slice(1).join(' ')}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-sky-700 inline-block"></span><span class="font-medium">Emisiones Locales en Colones (7.45% - 9.25%)</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-600 inline-block"></span><span class="font-medium">Eurobonos en USD (6.12% - 7.15%)</span></div>
+      `;
+
+    } else if (vista === 'participacion') {
+      methodologyNote.textContent = 'Porcentaje del saldo total emitido que se encuentra en custodia del régimen ROP para emisiones soberanas del Ministerio de Hacienda.';
+      const cuotas = [
+        { emision: 'Hacienda 2032 CRC', pctRop: 43.5, saldoTotal: '₡3.33 B', color: '#0284c7' },
+        { emision: 'Hacienda 2040 CRC', pctRop: 39.8, saldoTotal: '₡2.96 B', color: '#0369a1' },
+        { emision: 'Hacienda 2030 CRC', pctRop: 36.2, saldoTotal: '₡2.10 B', color: '#0284c7' },
+        { emision: 'Bono BCCR 2028 CRC', pctRop: 28.5, saldoTotal: '₡2.28 B', color: '#f59e0b' },
+        { emision: 'Eurobono 2031 USD', pctRop: 16.4, saldoTotal: '$1.50 B', color: '#10b981' }
+      ];
+
+      for (let v = 0; v <= 50; v += 10) {
+        const y = height - paddingY - (v / 50) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v}%</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / cuotas.length;
+      cuotas.forEach((c, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(50, barGroupW * 0.6);
+        const h = (c.pctRop / 50) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${c.color}"
+            rx="5"
+            data-tooltip-title="${c.emision}"
+            data-tooltip-rows='[{"label":"Participación ROP","value":"${c.pctRop.toFixed(1)}%","color":"${c.color}"},{"label":"Saldo Total Emitido","value":"${c.saldoTotal}"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${c.color}" text-anchor="middle">${c.pctRop.toFixed(1)}%</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${c.emision.split(' ')[0]}</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 34}" font-size="9" font-weight="500" fill="#64748b" text-anchor="middle">${c.emision.split(' ').slice(1, 3).join(' ')}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-sky-700 inline-block"></span><span>El ROP es el mayor tenedor de deuda soberana de Costa Rica (>40% en emisiones clave)</span></div>`;
+
+    } else {
+      // Tenencia por Operadora del Título Activo
+      methodologyNote.textContent = `Título: ${titulo.descripcion} (${titulo.isin}) · Emisor: ${titulo.emisor} · Tasa: ${titulo.tasaInteres}`;
+      const opcKeys = Object.keys(titulo.tenenciasOpcs);
+      const opcValues = Object.values(titulo.tenenciasOpcs);
+      const maxVal = Math.max(...opcValues) * 1.15;
+
+      for (let i = 0; i <= 4; i++) {
+        const v = (maxVal / 4) * i;
+        const y = height - paddingY - (i / 4) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">₡ ${(v / 1_000_000_000).toFixed(0)} B</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / opcKeys.length;
+      opcKeys.forEach((key, idx) => {
+        const monto = titulo.tenenciasOpcs[key];
+        const opColor = getOpColor(key);
+        const opNameShort = getOpNombreCorto(key);
+        const barW = Math.min(48, barGroupW * 0.65);
+        const h = (monto / maxVal) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all duration-300 hover:opacity-85"
+            x="${paddingX + idx * barGroupW + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${opColor}"
+            rx="5"
+            data-tooltip-title="${opNameShort}"
+            data-tooltip-rows='[{"label":"Tenencia Título","value":"${formatColones(monto, true)}","color":"${opColor}"},{"label":"Cuota en este título","value":"${((monto / titulo.montoTotalCRC) * 100).toFixed(1)}%"}]'
+          />
+          <text x="${paddingX + idx * barGroupW + barGroupW/2}" y="${y - 8}" font-size="10" font-weight="800" fill="${opColor}" text-anchor="middle">₡ ${(monto / 1_000_000_000).toFixed(1)}B</text>
+          <text x="${paddingX + idx * barGroupW + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${opNameShort}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-slate-800">ISIN:</span>
+          <code class="px-2 py-0.5 rounded bg-slate-100 font-mono text-blue-900 font-bold">${titulo.isin}</code>
+        </div>
+        <div><span>Sector: <strong>${titulo.sector}</strong></span></div>
+        <div><span>Vencimiento: <strong>${titulo.vencimiento}</strong></span></div>
+        <div><span>Monto Total Custodiado: <strong>${formatColones(titulo.montoTotalCRC, true)}</strong></span></div>
+      `;
+    }
+
+    svg.innerHTML = svgInner;
+
+    kpisGrid.innerHTML = `
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Código ISIN</span>
+        <strong class="text-xs sm:text-sm font-black text-blue-900 font-mono">${titulo.isin}</strong>
+        <span class="text-[11px] text-slate-500 block truncate">${titulo.emisor}</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Monto Total Custodiado</span>
+        <strong class="text-base sm:text-lg font-black text-[#0A2540]">${formatColones(titulo.montoTotalCRC, true)}</strong>
+        <span class="text-[11px] text-slate-500 block">${formatDolares(titulo.montoTotalUSD, true)}</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Instrumento</span>
+        <strong class="text-xs sm:text-sm font-black text-slate-800">${titulo.tipoInstrumento}</strong>
+        <span class="text-[11px] text-slate-500 block">${titulo.tasaInteres}</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Moneda / Vencimiento</span>
+        <strong class="text-base sm:text-lg font-black text-emerald-800">${titulo.moneda}</strong>
+        <span class="text-[11px] text-slate-500 block">${titulo.vencimiento}</span>
+      </div>
+    `;
+
+    const opcKeys = Object.keys(titulo.tenenciasOpcs);
+    tableContainer.innerHTML = `
+      <table class="w-full text-left font-mono text-[11px]">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-600 font-sans font-bold">
+            <th class="py-2 px-3">Operadora (OPC)</th>
+            <th class="py-2 px-3">Tenencia en Colones</th>
+            <th class="py-2 px-3">% de Participación en el Título</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          ${opcKeys.map(k => `
+            <tr>
+              <td class="py-2 px-3 font-sans font-bold text-slate-900">${getOpNombreCorto(k)}</td>
+              <td class="py-2 px-3 text-[#0A2540] font-bold">${formatColones(titulo.tenenciasOpcs[k], true)}</td>
+              <td class="py-2 px-3 text-emerald-800 font-bold">${((titulo.tenenciasOpcs[k] / titulo.montoTotalCRC) * 100).toFixed(2)}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // ==========================================
+  // RENDERER 4: /LT (4 Gráficos)
+  // 1. Saldo Neto Divergente
+  // 2. Flujo Bruto (Entradas vs Salidas)
+  // 3. Saldo Promedio por Afiliado Trasladado
+  // 4. Tasa de Rotación Neta (Churn Relativo)
+  // ==========================================
+  function renderLT() {
+    const { modo, metrica } = state.lt;
+
+    controlsContainer.innerHTML = `
+      <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${modo === 'divergente' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="ltModo" data-val="divergente">Saldo Neto Divergente</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${modo === 'flujo' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="ltModo" data-val="flujo">Flujo Bruto (In/Out)</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${modo === 'saldoMedio' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="ltModo" data-val="saldoMedio">Saldo Promedio Cuenta</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${modo === 'rotacion' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="ltModo" data-val="rotacion">Tasa de Movilidad (%)</button>
+      </div>
+      ${modo === 'divergente' || modo === 'flujo' ? `
+        <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+          <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${metrica === 'colones' ? 'bg-blue-600 text-white' : 'text-slate-600'}" data-ctrl="ltMetrica" data-val="colones">Colones (₡)</button>
+          <button type="button" class="ctrl-btn px-2 py-1 rounded-md font-bold transition-colors ${metrica === 'personas' ? 'bg-blue-600 text-white' : 'text-slate-600'}" data-ctrl="ltMetrica" data-val="personas">Personas</button>
+        </div>
+      ` : ''}
+    `;
+
+    const paddingX = 120;
+    const paddingY = 40;
+    const width = 860;
+    const height = 380;
+    const chartWidth = width - paddingX * 2;
+    const chartHeight = height - paddingY * 2 - 20;
+
+    let svgInner = '';
+
+    if (modo === 'flujo') {
+      methodologyNote.textContent = 'Rotación bruta de traslados: Comparativa de volumen total recibido (Entradas) frente al volumen cedido (Salidas) para cada operadora.';
+      const maxVal = metrica === 'colones' ? 30000000000 : 8000;
+      for (let i = 0; i <= 4; i++) {
+        const v = (maxVal / 4) * i;
+        const y = height - paddingY - (i / 4) * chartHeight;
+        const lbl = metrica === 'colones' ? `₡ ${(v / 1_000_000_000).toFixed(0)} B` : `${formatNumero(v)}`;
+        svgInner += `
+          <line x1="${paddingX - 20}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 26}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${lbl}</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / MOVILIDAD_RESUMEN.length;
+      MOVILIDAD_RESUMEN.forEach((m, idx) => {
+        const groupX = paddingX - 10 + idx * barGroupW;
+        const barW = Math.min(26, barGroupW * 0.38);
+
+        const vIn = metrica === 'colones' ? m.entradasMontoCRC : m.entradasPersonas;
+        const vOut = metrica === 'colones' ? m.salidasMontoCRC : m.salidasPersonas;
+
+        const hIn = (vIn / maxVal) * chartHeight;
+        const yIn = height - paddingY - hIn;
+        const hOut = (vOut / maxVal) * chartHeight;
+        const yOut = height - paddingY - hOut;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 - barW - 2}"
+            y="${yIn}"
+            width="${barW}"
+            height="${hIn}"
+            fill="#10b981"
+            rx="4"
+            data-tooltip-title="${m.nombre} (Entradas)"
+            data-tooltip-rows='[{"label":"Entradas","value":"${metrica === 'colones' ? formatColones(m.entradasMontoCRC, true) : formatNumero(m.entradasPersonas)}","color":"#10b981"}]'
+          />
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 + 2}"
+            y="${yOut}"
+            width="${barW}"
+            height="${hOut}"
+            fill="#f43f5e"
+            rx="4"
+            data-tooltip-title="${m.nombre} (Salidas)"
+            data-tooltip-rows='[{"label":"Salidas","value":"${metrica === 'colones' ? formatColones(m.salidasMontoCRC, true) : formatNumero(m.salidasPersonas)}","color":"#f43f5e"}]'
+          />
+          <text x="${groupX + barGroupW/2 - barW/2 - 2}" y="${yIn - 6}" font-size="9" font-weight="700" fill="#047857" text-anchor="middle">
+            ${metrica === 'colones' ? `₡${(vIn/1e9).toFixed(1)}B` : formatNumero(vIn)}
+          </text>
+          <text x="${groupX + barGroupW/2 + barW/2 + 2}" y="${yOut - 6}" font-size="9" font-weight="700" fill="#e11d48" text-anchor="middle">
+            ${metrica === 'colones' ? `₡${(vOut/1e9).toFixed(1)}B` : formatNumero(vOut)}
+          </text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">
+            ${getOpNombreCorto(m.operadoraId)}
+          </text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span class="font-medium">Entradas Brutas (Capital o Afiliados Ganados)</span></div>
+        <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-rose-500 inline-block"></span><span class="font-medium">Salidas Brutas (Capital o Afiliados Cedidos)</span></div>
+      `;
+
+    } else if (modo === 'saldoMedio') {
+      methodologyNote.textContent = 'Saldo promedio por afiliado trasladado: Revela el perfil socioeconómico de la cartera atraída. Las operadoras privadas suelen captar cuentas de mayor patrimonio promedio.';
+      const saldosMedios = [
+        { opc: 'BAC', saldoMedio: 16800000, color: '#dc2626' },
+        { opc: 'Vida Plena', saldoMedio: 14500000, color: '#d97706' },
+        { opc: 'BN Vital', saldoMedio: 10200000, color: '#16a34a' },
+        { opc: 'BCR', saldoMedio: 9800000, color: '#2563eb' },
+        { opc: 'Popular', saldoMedio: 8900000, color: '#0284c7' },
+        { opc: 'CCSS', saldoMedio: 7900000, color: '#0d9488' }
+      ];
+
+      const maxVal = 20000000;
+      for (let v = 0; v <= 20000000; v += 5000000) {
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX - 20}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 26}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">₡ ${(v / 1_000_000).toFixed(0)} M</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / saldosMedios.length;
+      saldosMedios.forEach((s, idx) => {
+        const groupX = paddingX - 10 + idx * barGroupW;
+        const barW = Math.min(48, barGroupW * 0.6);
+        const h = (s.saldoMedio / maxVal) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${s.color}"
+            rx="5"
+            data-tooltip-title="${s.opc} (Saldo Medio)"
+            data-tooltip-rows='[{"label":"Saldo Promedio Cuenta","value":"${formatColones(s.saldoMedio, true)}","color":"${s.color}"},{"label":"Perfil","value":"Masa salarial captada"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${s.color}" text-anchor="middle">₡ ${(s.saldoMedio / 1_000_000).toFixed(1)}M</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${s.opc}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-rose-600 inline-block"></span><span>BAC y Vida Plena captan las cuentas de mayor saldo acumulado promedio</span></div>`;
+
+    } else if (modo === 'rotacion') {
+      methodologyNote.textContent = 'Tasa de movilidad neta (% de variación de la base de afiliados derivado de solicitudes de libre transferencia en el mes).';
+      const rotaciones = [
+        { opc: 'BAC', tasa: 0.85, positivo: true, color: '#10b981' },
+        { opc: 'Vida Plena', tasa: 0.32, positivo: true, color: '#10b981' },
+        { opc: 'CCSS', tasa: 0.12, positivo: true, color: '#10b981' },
+        { opc: 'BCR', tasa: -0.18, positivo: false, color: '#f43f5e' },
+        { opc: 'BN Vital', tasa: -0.42, positivo: false, color: '#f43f5e' },
+        { opc: 'Popular', tasa: -0.65, positivo: false, color: '#f43f5e' }
+      ];
+
+      const zeroY = height / 2;
+      svgInner += `<line x1="${paddingX - 20}" y1="${zeroY}" x2="${width - paddingX}" y2="${zeroY}" stroke="#64748b" stroke-width="1.5" />`;
+
+      const barGroupW = chartWidth / rotaciones.length;
+      rotaciones.forEach((r, idx) => {
+        const groupX = paddingX - 10 + idx * barGroupW;
+        const barW = Math.min(46, barGroupW * 0.58);
+        const h = (Math.abs(r.tasa) / 1.0) * (chartHeight / 2);
+        const y = r.positivo ? zeroY - h : zeroY;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${r.color}"
+            rx="4"
+            data-tooltip-title="${r.opc} (Tasa Rotación)"
+            data-tooltip-rows='[{"label":"Tasa Neta","value":"${r.positivo ? '+' : ''}${r.tasa.toFixed(2)}%","color":"${r.color}"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${r.positivo ? y - 8 : y + h + 15}" font-size="11" font-weight="800" fill="${r.color}" text-anchor="middle">
+            ${r.positivo ? '+' : ''}${r.tasa.toFixed(2)}%
+          </text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${r.opc}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span class="font-medium">Ganancia Neta Relativa</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-rose-500 inline-block"></span><span class="font-medium">Pérdida Neta Relativa</span></div>
+      `;
+
+    } else {
+      // Divergente
+      methodologyNote.textContent = 'Saldo neto mensual de Libre Transferencia (traslados entre operadoras): Las entidades a la derecha presentan saldo neto positivo (captación neta), mientras que a la izquierda sufren fuga neta.';
+      const zeroX = paddingX + chartWidth / 2;
+      svgInner += `
+        <line x1="${zeroX}" y1="${paddingY - 10}" x2="${zeroX}" y2="${height - paddingY + 10}" stroke="#94a3b8" stroke-width="2" />
+        <text x="${zeroX}" y="${paddingY - 16}" font-size="11" font-weight="700" fill="#64748b" text-anchor="middle">Equilibrio Cero</text>
+      `;
+
+      const maxVal = metrica === 'colones' ? 25000000000 : 6000;
+      const barH = 34;
+      const gap = 16;
+      const startY = 40;
+
+      MOVILIDAD_RESUMEN.forEach((d, idx) => {
+        const y = startY + idx * (barH + gap);
+        const val = metrica === 'colones' ? d.saldoNetoMontoCRC : d.saldoNetoPersonas;
+        const isPositive = val >= 0;
+        const barLen = (Math.abs(val) / maxVal) * (chartWidth / 2);
+        const barX = isPositive ? zeroX : zeroX - barLen;
+        const color = isPositive ? '#10b981' : '#f43f5e';
+        const labelText = metrica === 'colones' ? formatColones(val, true) : `${formatNumero(val)} pers.`;
+
+        svgInner += `
+          <text x="${paddingX - 15}" y="${y + barH/2 + 4}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="end">
+            ${getOpNombreCorto(d.operadoraId)}
+          </text>
+          <rect
+            class="chart-elem cursor-pointer transition-all duration-300 hover:opacity-85"
+            x="${barX}"
+            y="${y}"
+            width="${barLen}"
+            height="${barH}"
+            fill="${color}"
+            rx="4"
+            data-tooltip-title="${d.nombre}"
+            data-tooltip-rows='[{"label":"Saldo Neto","value":"${labelText}","color":"${color}"},{"label":"Entradas","value":"${metrica === 'colones' ? formatColones(d.entradasMontoCRC, true) : formatNumero(d.entradasPersonas)}"},{"label":"Salidas","value":"${metrica === 'colones' ? formatColones(d.salidasMontoCRC, true) : formatNumero(d.salidasPersonas)}"}]'
+          />
+          <text
+            x="${isPositive ? barX + barLen + 8 : barX - 8}"
+            y="${y + barH/2 + 4}"
+            font-size="11"
+            font-weight="800"
+            fill="${color}"
+            text-anchor="${isPositive ? 'start' : 'end'}"
+          >
+            ${isPositive ? '+' : ''}${labelText}
+          </text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span class="font-medium">Saldo Positivo (Mayor captación de afiliados y capital)</span></div>
+        <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-rose-500 inline-block"></span><span class="font-medium">Saldo Negativo (Fuga neta de afiliados)</span></div>
+      `;
+    }
+
+    svg.innerHTML = svgInner;
+
+    const maxGanador = MOVILIDAD_RESUMEN.find(d => d.saldoNetoPersonas > 2000) || MOVILIDAD_RESUMEN[0];
+    const maxPerdedor = MOVILIDAD_RESUMEN.find(d => d.saldoNetoPersonas < -2000) || MOVILIDAD_RESUMEN[MOVILIDAD_RESUMEN.length - 1];
+    kpisGrid.innerHTML = `
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Mayor Captador Neto</span>
+        <strong class="text-base sm:text-lg font-black text-emerald-700">${maxGanador.nombre}</strong>
+        <span class="text-[11px] text-slate-500 block">+${formatColones(maxGanador.saldoNetoMontoCRC, true)}</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Mayor Salida Neta</span>
+        <strong class="text-base sm:text-lg font-black text-rose-700">${maxPerdedor.nombre}</strong>
+        <span class="text-[11px] text-slate-500 block">${formatColones(maxPerdedor.saldoNetoMontoCRC, true)}</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Volumen Trasladado</span>
+        <strong class="text-base sm:text-lg font-black text-[#0A2540]">₡ 61.9 Mil M</strong>
+        <span class="text-[11px] text-slate-500 block">Flujo mensual total</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Regla de Permanencia</span>
+        <strong class="text-base sm:text-lg font-black text-blue-900">6 Meses</strong>
+        <span class="text-[11px] text-slate-500 block">Derecho legal gratuito</span>
+      </div>
+    `;
+
+    tableContainer.innerHTML = `
+      <table class="w-full text-left font-mono text-[11px]">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-600 font-sans font-bold">
+            <th class="py-2 px-3">Operadora (OPC)</th>
+            <th class="py-2 px-3">Entradas (Personas)</th>
+            <th class="py-2 px-3">Salidas (Personas)</th>
+            <th class="py-2 px-3">Saldo Neto Personas</th>
+            <th class="py-2 px-3">Saldo Neto en Colones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          ${MOVILIDAD_RESUMEN.map(d => `
+            <tr>
+              <td class="py-2 px-3 font-sans font-bold text-slate-900">${d.nombre}</td>
+              <td class="py-2 px-3">${formatNumero(d.entradasPersonas)}</td>
+              <td class="py-2 px-3">${formatNumero(d.salidasPersonas)}</td>
+              <td class="py-2 px-3 font-bold ${d.saldoNetoPersonas >= 0 ? 'text-emerald-700' : 'text-rose-700'}">${d.saldoNetoPersonas >= 0 ? '+' : ''}${formatNumero(d.saldoNetoPersonas)}</td>
+              <td class="py-2 px-3 font-bold ${d.saldoNetoMontoCRC >= 0 ? 'text-emerald-700' : 'text-rose-700'}">${d.saldoNetoMontoCRC >= 0 ? '+' : ''}${formatColones(d.saldoNetoMontoCRC, true)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // ==========================================
+  // RENDERER 5: /Afiliado (4 Gráficos)
+  // 1. Pirámide Demográfica Laboral (Hombres vs Mujeres)
+  // 2. Brecha de Formalidad (Afiliados vs Cotizantes SICERE)
+  // 3. Brecha Salarial de Género
+  // 4. Cuota de Mercado de Afiliados por Operadora
+  // ==========================================
+  function renderAfiliado() {
+    const { vista } = state.afiliado;
+
+    controlsContainer.innerHTML = `
+      <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'piramide' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="afiliadoVista" data-val="piramide">Pirámide Hombres/Mujeres</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'formalidad' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="afiliadoVista" data-val="formalidad">Densidad Cotización</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'brecha' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="afiliadoVista" data-val="brecha">Brecha Salarial Género</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'cuotaMercado' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="afiliadoVista" data-val="cuotaMercado">Cuota Mercado OPCs</button>
+      </div>
+    `;
+
+    const paddingX = 90;
+    const paddingY = 40;
+    const width = 860;
+    const height = 380;
+    const chartWidth = width - paddingX * 2;
+    const chartHeight = height - paddingY * 2 - 20;
+
+    let svgInner = '';
+
+    if (vista === 'formalidad') {
+      methodologyNote.textContent = 'Brecha de formalidad laboral: Comparativa entre afiliados registrados en el fondo y cotizantes efectivos reportados en la planilla SICERE del mes en curso.';
+      const maxVal = 1300000;
+      for (let i = 0; i <= 4; i++) {
+        const v = (maxVal / 4) * i;
+        const y = height - paddingY - (i / 4) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${(v / 1000).toFixed(0)}k</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / DEMOGRAFIA_AFILIADOS.length;
+      DEMOGRAFIA_AFILIADOS.forEach((d, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(34, barGroupW * 0.4);
+
+        const hTot = (d.afiliadosTotal / maxVal) * chartHeight;
+        const yTot = height - paddingY - hTot;
+        const hCot = (d.cotizantesEfectivos / maxVal) * chartHeight;
+        const yCot = height - paddingY - hCot;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 - barW - 2}"
+            y="${yTot}"
+            width="${barW}"
+            height="${hTot}"
+            fill="#94a3b8"
+            rx="4"
+            data-tooltip-title="${d.rangoEdad} - Total Afiliados"
+            data-tooltip-rows='[{"label":"Afiliados Totales","value":"${formatNumero(d.afiliadosTotal)}","color":"#94a3b8"}]'
+          />
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 + 2}"
+            y="${yCot}"
+            width="${barW}"
+            height="${hCot}"
+            fill="#10b981"
+            rx="4"
+            data-tooltip-title="${d.rangoEdad} - Cotizantes Efectivos"
+            data-tooltip-rows='[{"label":"Cotizantes Activos","value":"${formatNumero(d.cotizantesEfectivos)}","color":"#10b981"},{"label":"Densidad","value":"${d.porcentajeCotizantes.toFixed(1)}%"}]'
+          />
+          <text x="${groupX + barGroupW/2 - barW/2 - 2}" y="${yTot - 6}" font-size="10" font-weight="700" fill="#64748b" text-anchor="middle">${(d.afiliadosTotal / 1000).toFixed(0)}k</text>
+          <text x="${groupX + barGroupW/2 + barW/2 + 2}" y="${yCot - 6}" font-size="10" font-weight="800" fill="#047857" text-anchor="middle">${(d.cotizantesEfectivos / 1000).toFixed(0)}k</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${d.rangoEdad}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-slate-400 inline-block"></span><span class="font-medium">Afiliados Totales Acumulados</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span class="font-medium">Cotizantes Efectivos Mensuales (~45.3% Densidad Media)</span></div>
+      `;
+
+    } else if (vista === 'cuotaMercado') {
+      methodologyNote.textContent = 'Distribución del total de afiliados entre las 6 operadoras (OPCs). Popular Pensiones absorbe por ley la asignación por defecto de trabajadores no inscritos.';
+      for (let v = 0; v <= 45; v += 10) {
+        const y = height - paddingY - (v / 45) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v}%</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / OPERADORAS.length;
+      OPERADORAS.forEach((op, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(48, barGroupW * 0.65);
+        const h = (op.cuotaMercado / 45) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${op.colorHex}"
+            rx="5"
+            data-tooltip-title="${op.nombre}"
+            data-tooltip-rows='[{"label":"Cuota de Mercado","value":"${op.cuotaMercado.toFixed(1)}%","color":"${op.colorHex}"},{"label":"Naturaleza","value":"${op.naturaleza}"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${op.colorHex}" text-anchor="middle">${op.cuotaMercado.toFixed(1)}%</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${op.nombreCorto}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-sky-600 inline-block"></span><span class="font-medium">Popular Pensiones concentra el 39.8% del mercado por asignación legal</span></div>
+      `;
+
+    } else if (vista === 'brecha') {
+      methodologyNote.textContent = 'Salario promedio mensual reportado a SICERE: comparativa entre Hombres y Mujeres en cada tramo etario y brecha salarial observada.';
+      const maxVal = 950000;
+      for (let i = 0; i <= 5; i++) {
+        const v = (maxVal / 5) * i;
+        const y = height - paddingY - (i / 5) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">₡ ${(v / 1000).toFixed(0)}k</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / DEMOGRAFIA_AFILIADOS.length;
+      DEMOGRAFIA_AFILIADOS.forEach((d, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(32, barGroupW * 0.38);
+
+        const hH = (d.salarioPromedioHombresCRC / maxVal) * chartHeight;
+        const yH = height - paddingY - hH;
+        const hM = (d.salarioPromedioMujeresCRC / maxVal) * chartHeight;
+        const yM = height - paddingY - hM;
+        const brechaPct = ((d.salarioPromedioHombresCRC - d.salarioPromedioMujeresCRC) / d.salarioPromedioMujeresCRC) * 100;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 - barW - 2}"
+            y="${yH}"
+            width="${barW}"
+            height="${hH}"
+            fill="#0284c7"
+            rx="4"
+            data-tooltip-title="${d.rangoEdad} - Hombres"
+            data-tooltip-rows='[{"label":"Salario Medio","value":"${formatColones(d.salarioPromedioHombresCRC)}","color":"#0284c7"}]'
+          />
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 + 2}"
+            y="${yM}"
+            width="${barW}"
+            height="${hM}"
+            fill="#d946ef"
+            rx="4"
+            data-tooltip-title="${d.rangoEdad} - Mujeres"
+            data-tooltip-rows='[{"label":"Salario Medio","value":"${formatColones(d.salarioPromedioMujeresCRC)}","color":"#d946ef"},{"label":"Brecha Salarial","value":"+${brechaPct.toFixed(1)}% hombres"}]'
+          />
+          <text x="${groupX + barGroupW/2 - barW/2 - 2}" y="${yH - 6}" font-size="9" font-weight="700" fill="#0284c7" text-anchor="middle">₡${(d.salarioPromedioHombresCRC/1000).toFixed(0)}k</text>
+          <text x="${groupX + barGroupW/2 + barW/2 + 2}" y="${yM - 6}" font-size="9" font-weight="700" fill="#d946ef" text-anchor="middle">₡${(d.salarioPromedioMujeresCRC/1000).toFixed(0)}k</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${d.rangoEdad}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-sky-600 inline-block"></span><span class="font-medium">Salario Hombres</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-fuchsia-500 inline-block"></span><span class="font-medium">Salario Mujeres</span></div>
+        <div class="flex items-center gap-1 text-slate-500"><span>Brecha media nacional: ~ +6.5% a favor de hombres</span></div>
+      `;
+
+    } else {
+      // Pirámide Clásica Hombres vs Mujeres
+      methodologyNote.textContent = 'Pirámide de población laboral cotizante al ROP. Los cotizantes efectivos son aquellos con reporte y pago activo en planilla SICERE en el mes.';
+      let maxVal = 700000;
+      for (let i = 0; i <= 4; i++) {
+        const v = (maxVal / 4) * i;
+        const y = height - paddingY - (i / 4) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${(v / 1000).toFixed(0)}k</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / DEMOGRAFIA_AFILIADOS.length;
+      DEMOGRAFIA_AFILIADOS.forEach((d, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(32, barGroupW * 0.38);
+
+        const valH = d.hombresCotizantes;
+        const valM = d.mujeresCotizantes;
+        const hH = (valH / maxVal) * chartHeight;
+        const yH = height - paddingY - hH;
+        const hM = (valM / maxVal) * chartHeight;
+        const yM = height - paddingY - hM;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-80"
+            x="${groupX + barGroupW/2 - barW - 2}"
+            y="${yH}"
+            width="${barW}"
+            height="${hH}"
+            fill="#0284c7"
+            rx="4"
+            data-tooltip-title="${d.rangoEdad} - Hombres"
+            data-tooltip-rows='[{"label":"Hombres Cotizantes","value":"${formatNumero(valH)}","color":"#0284c7"},{"label":"Densidad Rango","value":"${d.porcentajeCotizantes.toFixed(1)}%"}]'
+          />
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-80"
+            x="${groupX + barGroupW/2 + 2}"
+            y="${yM}"
+            width="${barW}"
+            height="${hM}"
+            fill="#d946ef"
+            rx="4"
+            data-tooltip-title="${d.rangoEdad} - Mujeres"
+            data-tooltip-rows='[{"label":"Mujeres Cotizantes","value":"${formatNumero(valM)}","color":"#d946ef"},{"label":"Densidad Rango","value":"${d.porcentajeCotizantes.toFixed(1)}%"}]'
+          />
+          <text x="${groupX + barGroupW/2 - barW/2 - 2}" y="${yH - 6}" font-size="10" font-weight="700" fill="#0284c7" text-anchor="middle">${(valH / 1000).toFixed(0)}k</text>
+          <text x="${groupX + barGroupW/2 + barW/2 + 2}" y="${yM - 6}" font-size="10" font-weight="700" fill="#d946ef" text-anchor="middle">${(valM / 1000).toFixed(0)}k</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${d.rangoEdad}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-sky-600 inline-block"></span><span class="font-medium">Hombres Cotizantes</span></div>
+        <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-fuchsia-500 inline-block"></span><span class="font-medium">Mujeres Cotizantes</span></div>
+      `;
+    }
+
+    svg.innerHTML = svgInner;
+
+    kpisGrid.innerHTML = `
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Afiliados Totales</span>
+        <strong class="text-base sm:text-lg font-black text-[#0A2540]">3.12 Millones</strong>
+        <span class="text-[11px] text-slate-500 block">Registrados en ROP</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Cotizantes Efectivos</span>
+        <strong class="text-base sm:text-lg font-black text-emerald-700">1.41 Millones</strong>
+        <span class="text-[11px] text-slate-500 block">En planilla mensual</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Densidad de Cotización</span>
+        <strong class="text-base sm:text-lg font-black text-blue-900">45.28%</strong>
+        <span class="text-[11px] text-slate-500 block">Cotizan regularmente</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Grupo Más Numeroso</span>
+        <strong class="text-base sm:text-lg font-black text-slate-800">31 a 45 años</strong>
+        <span class="text-[11px] text-slate-500 block">41.5% fuerza laboral</span>
+      </div>
+    `;
+
+    tableContainer.innerHTML = `
+      <table class="w-full text-left font-mono text-[11px]">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-600 font-sans font-bold">
+            <th class="py-2 px-3">Rango de Edad</th>
+            <th class="py-2 px-3">Total Afiliados</th>
+            <th class="py-2 px-3">Cotizantes SICERE</th>
+            <th class="py-2 px-3">Densidad Mensual</th>
+            <th class="py-2 px-3">Salario Prom. Hombres</th>
+            <th class="py-2 px-3">Salario Prom. Mujeres</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          ${DEMOGRAFIA_AFILIADOS.map(d => `
+            <tr>
+              <td class="py-2 px-3 font-sans font-bold text-slate-900">${d.rangoEdad}</td>
+              <td class="py-2 px-3">${formatNumero(d.afiliadosTotal)}</td>
+              <td class="py-2 px-3 text-emerald-800 font-bold">${formatNumero(d.cotizantesEfectivos)}</td>
+              <td class="py-2 px-3 font-bold">${d.porcentajeCotizantes.toFixed(1)}%</td>
+              <td class="py-2 px-3 text-slate-700">${formatColones(d.salarioPromedioHombresCRC)}</td>
+              <td class="py-2 px-3 text-slate-700">${formatColones(d.salarioPromedioMujeresCRC)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // ==========================================
+  // RENDERER 6: /Beneficio (4 Gráficos)
+  // 1. Distribución de Beneficiarios por Modalidad
+  // 2. Comparativa Dual: Personas vs Dinero Desembolsado
+  // 3. Pensión Promedio Mensual Resultante en Colones
+  // 4. Maduración Histórica de Beneficiarios (2016-2024)
+  // ==========================================
+  function renderBeneficio() {
+    const { vista } = state.beneficio;
+
+    controlsContainer.innerHTML = `
+      <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'modalidades' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="beneficioVista" data-val="modalidades">Modalidades Retiro</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'dualidad' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="beneficioVista" data-val="dualidad">Personas vs Montos (%)</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'pensionMedia' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="beneficioVista" data-val="pensionMedia">Pensión Promedio (₡)</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'evolucion' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="beneficioVista" data-val="evolucion">Maduración ROP (2016-24)</button>
+      </div>
+    `;
+
+    const paddingX = 90;
+    const paddingY = 40;
+    const width = 860;
+    const height = 380;
+    const chartWidth = width - paddingX * 2;
+    const chartHeight = height - paddingY * 2 - 20;
+
+    let svgInner = '';
+    const colors = ['#0284c7', '#10b981', '#f59e0b', '#6366f1'];
+
+    if (vista === 'dualidad') {
+      methodologyNote.textContent = 'Comparativa de concentración fiduciaria: % de beneficiarios que eligen cada modalidad frente al % del dinero total mensual desembolsado.';
+      for (let v = 0; v <= 60; v += 15) {
+        const y = height - paddingY - (v / 60) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${v}%</text>
+        `;
+      }
+
+      const totalCRC = BENEFICIOS_RETIROS.reduce((a, b) => a + b.montoTotalCRC, 0);
+      const totalPers = BENEFICIOS_RETIROS.reduce((a, b) => a + b.cantidadBeneficiarios, 0);
+
+      const barGroupW = chartWidth / BENEFICIOS_RETIROS.length;
+      BENEFICIOS_RETIROS.forEach((b, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(32, barGroupW * 0.38);
+
+        const pctPers = (b.cantidadBeneficiarios / totalPers) * 100;
+        const pctMonto = (b.montoTotalCRC / totalCRC) * 100;
+
+        const hP = (pctPers / 60) * chartHeight;
+        const yP = height - paddingY - hP;
+        const hM = (pctMonto / 60) * chartHeight;
+        const yM = height - paddingY - hM;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 - barW - 2}"
+            y="${yP}"
+            width="${barW}"
+            height="${hP}"
+            fill="#0284c7"
+            rx="4"
+            data-tooltip-title="${b.modalidad} (% Personas)"
+            data-tooltip-rows='[{"label":"Porcentaje Beneficiarios","value":"${pctPers.toFixed(1)}%","color":"#0284c7"}]'
+          />
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + barGroupW/2 + 2}"
+            y="${yM}"
+            width="${barW}"
+            height="${hM}"
+            fill="#10b981"
+            rx="4"
+            data-tooltip-title="${b.modalidad} (% Monto)"
+            data-tooltip-rows='[{"label":"Porcentaje Monto Total","value":"${pctMonto.toFixed(1)}%","color":"#10b981"}]'
+          />
+          <text x="${groupX + barGroupW/2 - barW/2 - 2}" y="${yP - 6}" font-size="10" font-weight="800" fill="#0284c7" text-anchor="middle">${pctPers.toFixed(0)}%</text>
+          <text x="${groupX + barGroupW/2 + barW/2 + 2}" y="${yM - 6}" font-size="10" font-weight="800" fill="#047857" text-anchor="middle">${pctMonto.toFixed(0)}%</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${b.modalidad.split(' ')[0]}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-sky-600 inline-block"></span><span class="font-medium">% de Beneficiarios</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span class="font-medium">% del Monto Total Mensual Pagado</span></div>
+      `;
+
+    } else if (vista === 'pensionMedia') {
+      methodologyNote.textContent = 'Monto promedio de pensión mensual devengado en colones según cada modalidad de jubilación estipulada en la Ley 7983 y Ley 9906.';
+      const maxVal = 250000;
+      for (let v = 0; v <= 250000; v += 50000) {
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">₡ ${(v / 1000).toFixed(0)}k</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / BENEFICIOS_RETIROS.length;
+      BENEFICIOS_RETIROS.forEach((b, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(55, barGroupW * 0.6);
+        const color = colors[idx % colors.length];
+        const h = (b.pensionPromedioMensualCRC / maxVal) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${color}"
+            rx="5"
+            data-tooltip-title="${b.modalidad}"
+            data-tooltip-rows='[{"label":"Pensión Promedio Mensual","value":"${formatColones(b.pensionPromedioMensualCRC)}","color":"${color}"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${color}" text-anchor="middle">₡ ${(b.pensionPromedioMensualCRC / 1000).toFixed(0)}k</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${b.modalidad.split(' ')[0]}</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 34}" font-size="9" font-weight="500" fill="#64748b" text-anchor="middle">${b.modalidad.split(' ').slice(1).join(' ')}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-sky-600 inline-block"></span><span>Renta Permanente lidera con ₡210.000 promedio mensual al preservar el capital principal</span></div>`;
+
+    } else if (vista === 'evolucion') {
+      methodologyNote.textContent = 'Curva de maduración del régimen obligatorio de pensiones: Crecimiento exponencial del número de jubilados conforme las cohortes completan cotizaciones (crecimiento +360% en 8 años).';
+      const evolucion = [
+        { año: 2016, pensionados: 18500 },
+        { año: 2018, pensionados: 32100 },
+        { año: 2020, pensionados: 51400 },
+        { año: 2022, pensionados: 68900 },
+        { año: 2024, pensionados: 85000 }
+      ];
+
+      const maxVal = 100000;
+      for (let v = 0; v <= 100000; v += 25000) {
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${(v / 1000).toFixed(0)}k</text>
+        `;
+      }
+
+      const points = evolucion.map((e, idx) => {
+        const x = paddingX + (idx / (evolucion.length - 1)) * chartWidth;
+        const y = height - paddingY - (e.pensionados / maxVal) * chartHeight;
+        return { ...e, x, y };
+      });
+
+      let pathD = `M ${points[0].x} ${points[0].y}`;
+      let areaD = `M ${points[0].x} ${height - paddingY} L ${points[0].x} ${points[0].y}`;
+      for (let i = 1; i < points.length; i++) {
+        pathD += ` L ${points[i].x} ${points[i].y}`;
+        areaD += ` L ${points[i].x} ${points[i].y}`;
+      }
+      areaD += ` L ${points[points.length - 1].x} ${height - paddingY} Z`;
+
+      svgInner += `
+        <defs>
+          <linearGradient id="pensionadosGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#10b981" stop-opacity="0.25" />
+            <stop offset="100%" stop-color="#10b981" stop-opacity="0.0" />
+          </linearGradient>
+        </defs>
+        <path d="${areaD}" fill="url(#pensionadosGrad)" />
+        <path d="${pathD}" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+      `;
+
+      points.forEach(p => {
+        svgInner += `
+          <line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${height - paddingY}" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
+          <circle
+            class="chart-elem cursor-pointer transition-transform hover:scale-125"
+            cx="${p.x}"
+            cy="${p.y}"
+            r="6"
+            fill="#0A2540"
+            stroke="#ffffff"
+            stroke-width="2.5"
+            data-tooltip-title="Año ${p.año}"
+            data-tooltip-rows='[{"label":"Pensionados Totales","value":"${formatNumero(p.pensionados)} pers.","color":"#10b981"}]'
+          />
+          <text x="${p.x}" y="${p.y - 12}" font-size="11" font-weight="800" fill="#0A2540" text-anchor="middle">${(p.pensionados / 1000).toFixed(1)}k</text>
+          <text x="${p.x}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#475569" text-anchor="middle">${p.año}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-emerald-500 inline-block"></span><span>85.000 personas jubiladas activas en el ROP al cierre 2024</span></div>`;
+
+    } else {
+      // Modalidades Clásicas
+      methodologyNote.textContent = 'Modalidades legales de pensión bajo Ley 7983 y Ley 9906. Renta Permanente preserva el capital, mientras que Retiro Programado agota el saldo según expectativa de vida.';
+      const maxVal = 50000;
+      for (let i = 0; i <= 4; i++) {
+        const v = (maxVal / 4) * i;
+        const y = height - paddingY - (i / 4) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 15}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">${(v / 1000).toFixed(0)}k</text>
+        `;
+      }
+
+      const barGroupW = chartWidth / BENEFICIOS_RETIROS.length;
+      BENEFICIOS_RETIROS.forEach((b, idx) => {
+        const groupX = paddingX + idx * barGroupW;
+        const barW = Math.min(65, barGroupW * 0.65);
+        const color = colors[idx % colors.length];
+        const val = b.cantidadBeneficiarios;
+        const h = (val / maxVal) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all duration-300 hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${color}"
+            rx="6"
+            data-tooltip-title="${b.modalidad}"
+            data-tooltip-rows='[{"label":"Beneficiarios","value":"${formatNumero(b.cantidadBeneficiarios)} (${b.porcentaje}%)","color":"${color}"},{"label":"Monto Total","value":"${formatColones(b.montoTotalCRC, true)}"},{"label":"Pensión Promedio","value":"${formatColones(b.pensionPromedioMensualCRC)}/mes"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${color}" text-anchor="middle">${formatNumero(val)} pers.</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">
+            ${b.modalidad.split(' ')[0]}
+          </text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 34}" font-size="10" font-weight="500" fill="#64748b" text-anchor="middle">
+            ${b.modalidad.split(' ').slice(1, 3).join(' ')}
+          </text>
+        `;
+      });
+
+      legendContainer.innerHTML = BENEFICIOS_RETIROS.map((b, idx) => `
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded" style="background-color: ${colors[idx % colors.length]}"></span>
+          <span class="font-medium">${b.modalidad} (${b.porcentaje}%)</span>
+        </div>
+      `).join('');
+    }
+
+    svg.innerHTML = svgInner;
+
+    const totalBeneficiarios = BENEFICIOS_RETIROS.reduce((acc, b) => acc + b.cantidadBeneficiarios, 0);
+    const totalDesembolsado = BENEFICIOS_RETIROS.reduce((acc, b) => acc + b.montoTotalCRC, 0);
+    kpisGrid.innerHTML = `
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Pensionados ROP</span>
+        <strong class="text-base sm:text-lg font-black text-[#0A2540]">${formatNumero(totalBeneficiarios)}</strong>
+        <span class="text-[11px] text-slate-500 block">Personas jubiladas</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Monto Mensual Pagado</span>
+        <strong class="text-base sm:text-lg font-black text-emerald-700">${formatColones(totalDesembolsado, true)}</strong>
+        <span class="text-[11px] text-slate-500 block">Flujo mensual de retiro</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Modalidad Predominante</span>
+        <strong class="text-base sm:text-lg font-black text-blue-900">Renta Permanente</strong>
+        <span class="text-[11px] text-slate-500 block">48.5% eligen esta opción</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Pensión Media ROP</span>
+        <strong class="text-base sm:text-lg font-black text-slate-800">₡ 185.000</strong>
+        <span class="text-[11px] text-slate-500 block">Complementaria al IVM</span>
+      </div>
+    `;
+
+    tableContainer.innerHTML = `
+      <table class="w-full text-left font-mono text-[11px]">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-600 font-sans font-bold">
+            <th class="py-2 px-3">Modalidad</th>
+            <th class="py-2 px-3">Beneficiarios</th>
+            <th class="py-2 px-3">Monto Desembolsado</th>
+            <th class="py-2 px-3">Pensión Promedio Mensual</th>
+            <th class="py-2 px-3">% del Total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          ${BENEFICIOS_RETIROS.map(b => `
+            <tr>
+              <td class="py-2 px-3 font-sans font-bold text-slate-900">${b.modalidad}</td>
+              <td class="py-2 px-3">${formatNumero(b.cantidadBeneficiarios)}</td>
+              <td class="py-2 px-3 text-[#0A2540] font-bold">${formatColones(b.montoTotalCRC, true)}</td>
+              <td class="py-2 px-3 text-emerald-800 font-bold">${formatColones(b.pensionPromedioMensualCRC)}</td>
+              <td class="py-2 px-3">${b.porcentaje.toFixed(1)}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // ==========================================
+  // RENDERER 7: /Cuenta (4 Gráficos)
+  // 1. Balance General (Catálogo SUPEN)
+  // 2. Evolución Histórica del Activo Neto Total (2010-24)
+  // 3. Desglose Estructural del Activo
+  // 4. Activos Administrados (AUM) por Operadora
+  // ==========================================
+  function renderCuenta() {
+    const { vista } = state.cuenta;
+
+    controlsContainer.innerHTML = `
+      <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'balance' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="cuentaVista" data-val="balance">Catálogo Contable</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'evolucionNAV' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="cuentaVista" data-val="evolucionNAV">Crecimiento Fondo (2010-24)</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'composicion' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="cuentaVista" data-val="composicion">Estructura del Activo</button>
+        <button type="button" class="ctrl-btn px-2.5 py-1 rounded-md font-bold transition-colors ${vista === 'aumOpcs' ? 'bg-[#0A2540] text-white' : 'text-slate-600'}" data-ctrl="cuentaVista" data-val="aumOpcs">AUM por Operadora</button>
+      </div>
+    `;
+
+    const paddingX = 140;
+    const paddingY = 40;
+    const width = 860;
+    const height = 380;
+    const chartWidth = width - paddingX * 2;
+    const chartHeight = height - paddingY * 2 - 20;
+
+    let svgInner = '';
+
+    if (vista === 'evolucionNAV') {
+      methodologyNote.textContent = 'Crecimiento histórico del Activo Neto Total del Sistema Nacional de Pensiones (SNP): De ₡5.2 Billones en 2010 a más de ₡27.45 Billones en 2024.';
+      const navHist = [
+        { año: 2010, navCRC: 5200000000000 },
+        { año: 2014, navCRC: 10800000000000 },
+        { año: 2018, navCRC: 17900000000000 },
+        { año: 2021, navCRC: 23500000000000 },
+        { año: 2024, navCRC: 27450890000000 }
+      ];
+
+      const maxVal = 30000000000000;
+      for (let v = 0; v <= 30000000000000; v += 6000000000000) {
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX - 40}" y1="${y}" x2="${width - paddingX + 40}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 48}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">₡ ${(v / 1e12).toFixed(0)} B</text>
+        `;
+      }
+
+      const points = navHist.map((n, idx) => {
+        const x = paddingX - 20 + (idx / (navHist.length - 1)) * (chartWidth + 40);
+        const y = height - paddingY - (n.navCRC / maxVal) * chartHeight;
+        return { ...n, x, y };
+      });
+
+      let pathD = `M ${points[0].x} ${points[0].y}`;
+      let areaD = `M ${points[0].x} ${height - paddingY} L ${points[0].x} ${points[0].y}`;
+      for (let i = 1; i < points.length; i++) {
+        pathD += ` L ${points[i].x} ${points[i].y}`;
+        areaD += ` L ${points[i].x} ${points[i].y}`;
+      }
+      areaD += ` L ${points[points.length - 1].x} ${height - paddingY} Z`;
+
+      svgInner += `
+        <defs>
+          <linearGradient id="navGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0A2540" stop-opacity="0.25" />
+            <stop offset="100%" stop-color="#0A2540" stop-opacity="0.0" />
+          </linearGradient>
+        </defs>
+        <path d="${areaD}" fill="url(#navGrad)" />
+        <path d="${pathD}" fill="none" stroke="#0A2540" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+      `;
+
+      points.forEach(p => {
+        svgInner += `
+          <line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${height - paddingY}" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
+          <circle
+            class="chart-elem cursor-pointer transition-transform hover:scale-125"
+            cx="${p.x}"
+            cy="${p.y}"
+            r="6"
+            fill="#0284c7"
+            stroke="#ffffff"
+            stroke-width="2.5"
+            data-tooltip-title="Año ${p.año}"
+            data-tooltip-rows='[{"label":"Activo Neto SNP","value":"${formatColones(p.navCRC, true)}","color":"#0A2540"}]'
+          />
+          <text x="${p.x}" y="${p.y - 12}" font-size="11" font-weight="800" fill="#0A2540" text-anchor="middle">₡ ${(p.navCRC / 1e12).toFixed(1)}B</text>
+          <text x="${p.x}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#475569" text-anchor="middle">${p.año}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-[#0A2540] inline-block"></span><span>Multiplicación patrimonial x5.2 en 14 años de maduración previsional</span></div>`;
+
+    } else if (vista === 'composicion') {
+      methodologyNote.textContent = 'Estructura patrimonial del Activo Total: El 95.38% se mantiene invertido en títulos bursátiles generando rendimientos diarios.';
+      const activos = [
+        { cuenta: 'Títulos Valores de Inversión', pct: 95.38, montoCRC: 26180500000000, color: '#0A2540' },
+        { cuenta: 'Disponibilidades y Efectivo', pct: 2.75, montoCRC: 754900000000, color: '#0284c7' },
+        { cuenta: 'Intereses y Dividendos por Cobrar', pct: 1.32, montoCRC: 362350000000, color: '#10b981' },
+        { cuenta: 'Otros Activos y Depósitos Garantía', pct: 0.55, montoCRC: 153140000000, color: '#f59e0b' }
+      ];
+
+      const barH = 34;
+      const gap = 20;
+      const startY = 45;
+
+      svgInner += `<line x1="${paddingX + 180}" y1="${startY - 10}" x2="${paddingX + 180}" y2="${startY + activos.length * (barH + gap)}" stroke="#94a3b8" stroke-width="1.5" />`;
+
+      activos.forEach((a, idx) => {
+        const y = startY + idx * (barH + gap);
+        const maxBarW = chartWidth - 140;
+        const barW = (a.pct / 100) * maxBarW;
+
+        svgInner += `
+          <text x="${paddingX + 170}" y="${y + barH/2 + 4}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="end">${a.cuenta}</text>
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${paddingX + 180}"
+            y="${y}"
+            width="${barW}"
+            height="${barH}"
+            fill="${a.color}"
+            rx="4"
+            data-tooltip-title="${a.cuenta}"
+            data-tooltip-rows='[{"label":"Porcentaje","value":"${a.pct.toFixed(2)}%","color":"${a.color}"},{"label":"Monto","value":"${formatColones(a.montoCRC, true)}"}]'
+          />
+          <text x="${paddingX + 190 + barW}" y="${y + barH/2 + 4}" font-size="11" font-weight="800" fill="${a.color}">${a.pct.toFixed(1)}% (${formatColones(a.montoCRC, true)})</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-[#0A2540] inline-block"></span><span>Cero ociosidad de recursos: Más del 95% generando rendimientos fiduciarios</span></div>`;
+
+    } else if (vista === 'aumOpcs') {
+      methodologyNote.textContent = 'Activos bajo administración (AUM) por operadora en colones y participación en el fondo consolidado.';
+      const opcAUM = [
+        { opc: 'Popular', aumCRC: 10920000000000, pct: 39.8, color: '#0284c7' },
+        { opc: 'BN Vital', aumCRC: 5180000000000, pct: 18.9, color: '#16a34a' },
+        { opc: 'BCR', aumCRC: 4200000000000, pct: 15.3, color: '#2563eb' },
+        { opc: 'BAC', aumCRC: 3620000000000, pct: 13.2, color: '#dc2626' },
+        { opc: 'CCSS', aumCRC: 2030000000000, pct: 7.4, color: '#0d9488' },
+        { opc: 'Vida Plena', aumCRC: 1480000000000, pct: 5.4, color: '#d97706' }
+      ];
+
+      const maxVal = 12000000000000;
+      for (let v = 0; v <= 12000000000000; v += 3000000000000) {
+        const y = height - paddingY - (v / maxVal) * chartHeight;
+        svgInner += `
+          <line x1="${paddingX - 40}" y1="${y}" x2="${width - paddingX + 40}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+          <text x="${paddingX - 48}" y="${y + 4}" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">₡ ${(v / 1e12).toFixed(0)} B</text>
+        `;
+      }
+
+      const barGroupW = (chartWidth + 40) / opcAUM.length;
+      opcAUM.forEach((op, idx) => {
+        const groupX = paddingX - 30 + idx * barGroupW;
+        const barW = Math.min(48, barGroupW * 0.62);
+        const h = (op.aumCRC / maxVal) * chartHeight;
+        const y = height - paddingY - h;
+
+        svgInner += `
+          <rect
+            class="chart-elem cursor-pointer transition-all hover:opacity-85"
+            x="${groupX + (barGroupW - barW)/2}"
+            y="${y}"
+            width="${barW}"
+            height="${h}"
+            fill="${op.color}"
+            rx="5"
+            data-tooltip-title="${op.opc}"
+            data-tooltip-rows='[{"label":"Activos Administrados","value":"${formatColones(op.aumCRC, true)}","color":"${op.color}"},{"label":"Participación AUM","value":"${op.pct.toFixed(1)}%"}]'
+          />
+          <text x="${groupX + barGroupW/2}" y="${y - 8}" font-size="11" font-weight="800" fill="${op.color}" text-anchor="middle">₡ ${(op.aumCRC / 1e12).toFixed(1)}B</text>
+          <text x="${groupX + barGroupW/2}" y="${height - paddingY + 20}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="middle">${op.opc}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = `<div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-sky-600 inline-block"></span><span>Popular Pensiones custodia casi ₡11 Billones (~40% del AUM de todo el país)</span></div>`;
+
+    } else {
+      // Balance Contable General
+      methodologyNote.textContent = 'Cuentas contables estandarizadas del catálogo SUPEN. El Activo Neto representa el saldo acumulado en custodia fiduciaria para los afiliados.';
+      const cuentas = [
+        { codigo: '0110000000000', nombre: 'Activo Neto del Fondo', montoCRC: 27450890000000, color: '#0A2540' },
+        { codigo: '0212000000000', nombre: 'Inversiones en Instrumentos', montoCRC: 26180500000000, color: '#0284c7' },
+        { codigo: '0230000000000', nombre: 'Patrimonio de Fondos', montoCRC: 27120300000000, color: '#10b981' },
+        { codigo: '0220000000000', nombre: 'Pasivos Totales', montoCRC: 330590000000, color: '#f43f5e' }
+      ];
+
+      const maxVal = 30000000000000;
+      const barH = 36;
+      const gap = 24;
+      const startY = 50;
+
+      cuentas.forEach((c, idx) => {
+        const y = startY + idx * (barH + gap);
+        const barLen = (c.montoCRC / maxVal) * chartWidth;
+
+        svgInner += `
+          <text x="${paddingX - 15}" y="${y + barH/2 + 4}" font-size="11" font-weight="700" fill="#1e293b" text-anchor="end">${c.nombre}</text>
+          <rect
+            class="chart-elem cursor-pointer transition-all duration-300 hover:opacity-85"
+            x="${paddingX}"
+            y="${y}"
+            width="${barLen}"
+            height="${barH}"
+            fill="${c.color}"
+            rx="5"
+            data-tooltip-title="${c.nombre}"
+            data-tooltip-rows='[{"label":"Código Cuenta","value":"${c.codigo}","color":"${c.color}"},{"label":"Saldo Contable","value":"${formatColones(c.montoCRC, true)}"}]'
+          />
+          <text x="${paddingX + barLen + 10}" y="${y + barH/2 + 4}" font-size="11" font-weight="800" fill="${c.color}">${formatColones(c.montoCRC, true)}</text>
+        `;
+      });
+
+      legendContainer.innerHTML = cuentas.map(c => `
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded" style="background-color: ${c.color}"></span>
+          <span class="font-medium font-mono text-[11px]">${c.codigo} (${c.nombre.split(' ')[0]})</span>
+        </div>
+      `).join('');
+    }
+
+    svg.innerHTML = svgInner;
+
+    kpisGrid.innerHTML = `
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Activo Neto Consolidado</span>
+        <strong class="text-base sm:text-lg font-black text-[#0A2540]">₡ 27.45 Billones</strong>
+        <span class="text-[11px] text-slate-500 block">Cuenta 0110000000000</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Inversiones Bursátiles</span>
+        <strong class="text-base sm:text-lg font-black text-sky-800">95.4%</strong>
+        <span class="text-[11px] text-slate-500 block">En títulos valores</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Pasivos del Sistema</span>
+        <strong class="text-base sm:text-lg font-black text-rose-700">&lt; 1.3%</strong>
+        <span class="text-[11px] text-slate-500 block">Apalancamiento casi nulo</span>
+      </div>
+      <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Frecuencia Contable</span>
+        <strong class="text-base sm:text-lg font-black text-slate-800">Mensual</strong>
+        <span class="text-[11px] text-slate-500 block">Último día hábil</span>
+      </div>
+    `;
+
+    const cuentas = [
+      { codigo: '0110000000000', nombre: 'Activo Neto del Fondo', montoCRC: 27450890000000 },
+      { codigo: '0212000000000', nombre: 'Inversiones en Instrumentos', montoCRC: 26180500000000 },
+      { codigo: '0230000000000', nombre: 'Patrimonio de Fondos', montoCRC: 27120300000000 },
+      { codigo: '0220000000000', nombre: 'Pasivos Totales', montoCRC: 330590000000 }
+    ];
+    tableContainer.innerHTML = `
+      <table class="w-full text-left font-mono text-[11px]">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-600 font-sans font-bold">
+            <th class="py-2 px-3">Código Cuenta</th>
+            <th class="py-2 px-3">Denominación Oficial</th>
+            <th class="py-2 px-3">Monto en Colones</th>
+            <th class="py-2 px-3">Monto en Dólares</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          ${cuentas.map(c => `
+            <tr>
+              <td class="py-2 px-3 font-bold text-[#0A2540]">${c.codigo}</td>
+              <td class="py-2 px-3 font-sans font-medium text-slate-900">${c.nombre}</td>
+              <td class="py-2 px-3 text-[#0A2540] font-bold">${formatColones(c.montoCRC, true)}</td>
+              <td class="py-2 px-3 text-slate-700">${formatDolares(c.montoCRC / KPI_SISTEMA.tipoCambioBccr, true)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // ==========================================
+  // DISPATCHER PRINCIPAL
+  // ==========================================
+  function switchEndpoint(idx: number) {
+    currentEndpointIdx = idx;
+    const ep = API_ENDPOINTS[idx];
+
+    epButtons.forEach((btn, i) => {
+      if (i === idx) {
+        btn.className = 'ep-selector-btn px-2.5 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex flex-col justify-between gap-1 group bg-[#0A2540] border-[#0A2540] text-white shadow-sm ring-2 ring-blue-500/20';
+      } else {
+        btn.className = 'ep-selector-btn px-2.5 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex flex-col justify-between gap-1 group bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300';
+      }
+    });
+
+    activeEpBadge.textContent = ep.endpoint;
+    epTitle.textContent = ep.endpoint;
+    epName.textContent = ep.nombre;
+    epDesc.textContent = ep.descripcion;
+
+    hideTooltip();
+
+    switch (ep.endpoint) {
+      case '/rendimiento':
+        renderRendimiento();
+        break;
+      case '/comision':
+        renderComision();
+        break;
+      case '/portafolio':
+        renderPortafolio();
+        break;
+      case '/portafolioISIN':
+        renderPortafolioISIN();
+        break;
+      case '/LT':
+        renderLT();
+        break;
+      case '/Afiliado':
+        renderAfiliado();
+        break;
+      case '/Beneficio':
+        renderBeneficio();
+        break;
+      case '/Cuenta':
+        renderCuenta();
+        break;
+      default:
+        renderRendimiento();
+    }
+
+    attachSvgTooltipListeners();
+  }
+
+  function attachSvgTooltipListeners() {
+    const elements = svg.querySelectorAll('.chart-elem');
+    elements.forEach(el => {
+      el.addEventListener('mouseenter', (e) => {
+        const title = el.getAttribute('data-tooltip-title') || 'Detalle';
+        const rowsStr = el.getAttribute('data-tooltip-rows') || '[]';
+        try {
+          const rows = JSON.parse(rowsStr);
+          showTooltip(e as MouseEvent, title, rows);
+        } catch {
+          // ignore
+        }
+      });
+      el.addEventListener('mousemove', (e) => {
+        const title = el.getAttribute('data-tooltip-title') || 'Detalle';
+        const rowsStr = el.getAttribute('data-tooltip-rows') || '[]';
+        try {
+          const rows = JSON.parse(rowsStr);
+          showTooltip(e as MouseEvent, title, rows);
+        } catch {
+          // ignore
+        }
+      });
+      el.addEventListener('mouseleave', () => {
+        hideTooltip();
+      });
+    });
+  }
+
+  // Delegación de eventos para controles dinámicos
+  controlsContainer.addEventListener('click', (e) => {
+    const target = (e.target as HTMLElement).closest('.ctrl-btn') as HTMLButtonElement;
+    if (!target) return;
+
+    const ctrl = target.getAttribute('data-ctrl');
+    const val = target.getAttribute('data-val');
+    if (!ctrl || !val) return;
+
+    const ep = API_ENDPOINTS[currentEndpointIdx];
+    if (ep.endpoint === '/rendimiento') {
+      if (ctrl === 'horizonte') state.rendimiento.horizonte = val;
+      if (ctrl === 'modo') state.rendimiento.modo = val;
+      renderRendimiento();
+    } else if (ep.endpoint === '/comision') {
+      if (ctrl === 'vista') state.comision.vista = val;
+      renderComision();
+    } else if (ep.endpoint === '/portafolio') {
+      if (ctrl === 'portafolioVista') state.portafolio.vista = val;
+      if (ctrl === 'unidad') state.portafolio.unidad = val;
+      renderPortafolio();
+    } else if (ep.endpoint === '/portafolioISIN') {
+      if (ctrl === 'isinVista') state.portafolioISIN.vista = val;
+      if (ctrl === 'isinIdx') state.portafolioISIN.isinIdx = parseInt(val);
+      renderPortafolioISIN();
+    } else if (ep.endpoint === '/LT') {
+      if (ctrl === 'ltModo') state.lt.modo = val;
+      if (ctrl === 'ltMetrica') state.lt.metrica = val;
+      renderLT();
+    } else if (ep.endpoint === '/Afiliado') {
+      if (ctrl === 'afiliadoVista') state.afiliado.vista = val;
+      renderAfiliado();
+    } else if (ep.endpoint === '/Beneficio') {
+      if (ctrl === 'beneficioVista') state.beneficio.vista = val;
+      renderBeneficio();
+    } else if (ep.endpoint === '/Cuenta') {
+      if (ctrl === 'cuentaVista') state.cuenta.vista = val;
+      renderCuenta();
+    }
+
+    attachSvgTooltipListeners();
+  });
+
+  epButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.getAttribute('data-endpoint-idx') || '0');
+      switchEndpoint(idx);
+    });
+  });
+
+  // Salto al apartado de comentarios con el endpoint actual
+  if (btnGotoComments) {
+    btnGotoComments.addEventListener('click', () => {
+      const btnViewComments = document.getElementById('btn-view-comments') as HTMLButtonElement;
+      if (btnViewComments) {
+        btnViewComments.click();
+        const commentBtns = document.querySelectorAll('.comment-ep-btn') as NodeListOf<HTMLButtonElement>;
+        if (commentBtns[currentEndpointIdx]) {
+          commentBtns[currentEndpointIdx].click();
+        }
+      }
+    });
+  }
+
+  // Inicializar en 0 (/rendimiento)
+  switchEndpoint(0);
+</script>
