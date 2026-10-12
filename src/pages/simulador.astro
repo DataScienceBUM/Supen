@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import InteractiveSimulator from '../components/InteractiveSimulator.astro';
+---
+
+<BaseLayout
+  title="Simulador 'Elige tu OPC' | SUPEN Costa Rica"
+  description="Calcula tu saldo de jubilación futuro y pensión mensual estimada en el ROP según el rendimiento real histórico de cada operadora de pensiones."
+>
+  <div class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold mb-3">
+      <span>💡 Herramienta de Decisión Ciudadana</span>
+      <span>•</span>
+      <span>Cálculo Personalizado</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+      Simulador: ¿Cuál Operadora te Conviene Más?
+    </h1>
+    <p class="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed">
+      Usa esta herramienta para calcular la diferencia de capital acumulado que experimentarás al jubilarte a los 65 años según la operadora en la que cotices. El rendimiento compuesto multiplica las pequeñas diferencias porcentuales en millones de colones.
+    </p>
+  </div>
+
+  <!-- Componente Simulador -->
+  <section class="mb-12">
+    <InteractiveSimulator />
+  </section>
+
+  <!-- Preguntas Frecuentes y Guía Ciudadana -->
+  <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+    <h3 class="text-xl font-black text-slate-900 mb-6">
+      Guía Rápida para el Trabajador Afiliado
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-700">
+      <div class="space-y-2 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+        <h4 class="font-black text-slate-900 text-sm">¿Cómo sé en cuál operadora estoy inscrito?</h4>
+        <p class="leading-relaxed text-slate-600">
+          Puedes ingresar a la sucursal electrónica de <strong>SICERE (CCSS)</strong> con tus credenciales o Firma Digital. Si nunca elegiste activamente una operadora, la ley asigna por defecto tu cuenta a <strong>Popular Pensiones</strong>.
+        </p>
+      </div>
+
+      <div class="space-y-2 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+        <h4 class="font-black text-slate-900 text-sm">¿Tiene algún costo cambiarme de operadora?</h4>
+        <p class="leading-relaxed text-slate-600">
+          <strong>Ninguno.</strong> La Ley N.° 7983 (Artículo 10) garantiza el derecho a la <strong>Libre Transferencia</strong> gratuita. El único requisito es haber cumplido al menos <strong>6 meses calendario</strong> de permanencia en tu operadora actual.
+        </p>
+      </div>
+
+      <div class="space-y-2 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+        <h4 class="font-black text-slate-900 text-sm">¿Cuánto dinero se aporta cada mes a mi cuenta?</h4>
+        <p class="leading-relaxed text-slate-600">
+          Se aporta un <strong>4.25% de tu salario bruto mensual</strong>: un 1.0% se deduce de tu salario y un 3.25% es aportado obligatoriamente por tu patrono. Además, el patrono aporta un 1.5% al <strong>FCL</strong>.
+        </p>
+      </div>
+
+      <div class="space-y-2 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+        <h4 class="font-black text-slate-900 text-sm">¿Qué debo evitar al elegir una operadora?</h4>
+        <p class="leading-relaxed text-slate-600">
+          Evita el <em>"sesgo de recencia"</em>: no tomes decisiones mirando solo el ranking de los últimos 12 meses ni te traslades durante caídas transitorias de mercado (minusvalías), pues consolidarías pérdidas al liquidar tus cuotas deprimidas.
+        </p>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

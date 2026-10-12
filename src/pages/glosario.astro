@@ -1,0 +1,107 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { GLOSARIO } from '../data/supen-data';
+---
+
+<BaseLayout
+  title="Glosario Previsional y Marco Legal | SUPEN Costa Rica"
+  description="Glosario interactivo de términos clave del Sistema Nacional de Pensiones: ROP, FCL, NAV, Minusvalías, Fondos Generacionales y leyes previsionales."
+>
+  <div class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0A2540] text-xs font-bold mb-3">
+      <span>📖 Educación Previsional</span>
+      <span>•</span>
+      <span>Conceptos y Leyes</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+      Glosario Previsional y Fundamentos Jurídicos
+    </h1>
+    <p class="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed">
+      Encuentra la definición clara de los términos técnicos, siglas y conceptos financieros más importantes del sistema de pensiones costarricense según la Ley de Protección al Trabajador.
+    </p>
+  </div>
+
+  <!-- Barra de Filtros y Búsqueda -->
+  <div class="bg-white border border-slate-200/90 rounded-2xl p-4 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+    <div class="relative w-full sm:w-80">
+      <input
+        id="glosario-search"
+        type="text"
+        placeholder="Buscar término (ej. ROP, minusvalía, NAV)..."
+        class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 pl-9 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A2540] font-medium"
+      />
+      <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    </div>
+
+    <div class="flex items-center gap-1.5 flex-wrap text-xs">
+      <button type="button" class="cat-btn px-3 py-1.5 rounded-lg bg-[#0A2540] text-white font-bold shadow-2xs" data-cat="todas">Todos</button>
+      <button type="button" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 font-medium" data-cat="Regímenes">Regímenes</button>
+      <button type="button" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 font-medium" data-cat="Finanzas y Rentabilidad">Finanzas</button>
+      <button type="button" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 font-medium" data-cat="Operación">Operación</button>
+    </div>
+  </div>
+
+  <!-- Rejilla de Términos -->
+  <div id="glosario-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {GLOSARIO.map((item) => (
+      <div
+        class="glosario-card bg-white border border-slate-200/90 rounded-2xl p-5 hover:border-slate-300 hover:shadow-xs transition-all flex flex-col justify-between shadow-2xs"
+        data-cat={item.categoria}
+        data-search={`${item.sigla} ${item.nombre} ${item.definicion}`}
+      >
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-black text-[#0A2540] font-mono bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md">
+              {item.sigla}
+            </span>
+            <span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+              {item.categoria}
+            </span>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 mb-2 leading-snug">
+            {item.nombre}
+          </h3>
+          <p class="text-xs text-slate-600 leading-relaxed mb-4">
+            {item.definicion}
+          </p>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 text-[11px] text-slate-500 font-mono flex items-center gap-1.5 font-medium">
+          <span>⚖️ {item.baseLegal}</span>
+        </div>
+      </div>
+    ))}
+  </div>
+</BaseLayout>
+
+<script>
+  const searchInput = document.getElementById('glosario-search') as HTMLInputElement;
+  const cards = document.querySelectorAll('.glosario-card') as NodeListOf<HTMLElement>;
+  const catBtns = document.querySelectorAll('.cat-btn') as NodeListOf<HTMLButtonElement>;
+
+  let currentCategory = 'todas';
+
+  function filterCards() {
+    const q = (searchInput?.value || '').toLowerCase().trim();
+    cards.forEach(card => {
+      const cardCat = card.getAttribute('data-cat') || '';
+      const text = (card.getAttribute('data-search') || '').toLowerCase();
+
+      const matchesCat = currentCategory === 'todas' || cardCat === currentCategory;
+      const matchesSearch = !q || text.includes(q);
+
+      card.style.display = matchesCat && matchesSearch ? '' : 'none';
+    });
+  }
+
+  searchInput?.addEventListener('input', filterCards);
+
+  catBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      catBtns.forEach(b => b.className = 'cat-btn px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 font-medium');
+      btn.className = 'cat-btn px-3 py-1.5 rounded-lg bg-[#0A2540] text-white font-bold shadow-2xs';
+      currentCategory = btn.getAttribute('data-cat') || 'todas';
+      filterCards();
+    });
+  });
+</script>

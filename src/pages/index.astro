@@ -1,0 +1,250 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import KpiCard from '../components/KpiCard.astro';
+import OpdBadge from '../components/OpdBadge.astro';
+import InteractiveSimulator from '../components/InteractiveSimulator.astro';
+import { KPI_SISTEMA, OPERADORAS, RENTABILIDADES } from '../data/supen-data';
+import { formatColones, formatDolares, formatNumero } from '../utils/formatters';
+---
+
+<BaseLayout
+  title="SUPEN Costa Rica | Observatorio y Estadísticas del Sistema Nacional de Pensiones"
+  description="Plataforma abierta y ciudadana para explorar las estadísticas, rendimientos, comisiones y portafolios del Sistema Nacional de Pensiones de Costa Rica."
+>
+  <!-- Hero Section Soberano Institucional -->
+  <section class="py-6 sm:py-8">
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0A2540] via-[#0E355C] to-[#0A2540] border border-[#0A2540] p-6 sm:p-12 shadow-xl text-white">
+      <div class="relative z-10 max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/60 border border-blue-400/30 text-blue-200 text-xs font-bold mb-4">
+          <span class="w-2 h-2 rounded-full bg-blue-300 animate-ping"></span>
+          <span>Transparencia & Datos Abiertos de Costa Rica</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+          El Ahorro de los Costarricenses en Cifras Claras
+        </h1>
+
+        <p class="text-slate-200 text-sm sm:text-base mt-4 leading-relaxed font-normal">
+          El Sistema Nacional de Pensiones (SNP) custodia el patrimonio laboral de más de <strong>3 millones de afiliados</strong>. Accede a estadísticas oficiales de rentabilidad real, comisiones, asignación de portafolios y simula tu jubilación futura.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-3 mt-6">
+          <a
+            href="/simulador"
+            class="px-5 py-2.5 rounded-xl bg-white text-[#0A2540] hover:bg-slate-100 font-extrabold text-xs sm:text-sm transition-all shadow-sm flex items-center gap-2"
+          >
+            <span>Simula tu Jubilación ("Elige tu OPC")</span>
+            <span>→</span>
+          </a>
+          <a
+            href="/rendimientos"
+            class="px-5 py-2.5 rounded-xl bg-blue-900/60 hover:bg-blue-900/90 border border-blue-400/30 text-white font-bold text-xs sm:text-sm transition-all"
+          >
+            Ver Ranking de Rentabilidades
+          </a>
+          <a
+            href="/api"
+            class="px-4 py-2.5 rounded-xl bg-[#061526] hover:bg-slate-900 border border-slate-700 text-slate-200 font-mono text-xs font-bold transition-all flex items-center gap-1.5"
+          >
+            <span class="text-emerald-400">⚡</span>
+            <span>API OpenData</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Decorativo sutil de fondo -->
+      <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+  </section>
+
+  <!-- Tarjetas KPI del Sistema -->
+  <section class="py-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <KpiCard
+        titulo="Activos Administrados (SNP)"
+        valor={formatColones(KPI_SISTEMA.activosTotalesCRC, true)}
+        subtitulo={`Aprox. ${formatDolares(KPI_SISTEMA.activosTotalesUSD, true)}`}
+        badge="~30% PIB"
+        badgeColor="emerald"
+        tooltip="Suma total de carteras de inversión del ROP, FCL, Regímenes Voluntarios y Básicos."
+      />
+
+      <KpiCard
+        titulo="Régimen ROP Acumulado"
+        valor={formatColones(KPI_SISTEMA.activosRopCRC, true)}
+        subtitulo="Patrimonio en cuentas individuales"
+        badge="Pilar 2"
+        badgeColor="blue"
+        tooltip="Aporte obligatorio mensual del 4.25% del salario (Ley N.° 7983)."
+      />
+
+      <KpiCard
+        titulo="Afiliados y Cotizantes SICERE"
+        valor={formatNumero(KPI_SISTEMA.totalAfiliados)}
+        subtitulo={`${formatNumero(KPI_SISTEMA.totalCotizantes)} cotizantes activos en mes`}
+        badge={`${KPI_SISTEMA.tasaDensidadCotizacion.toFixed(1)}% densidad`}
+        badgeColor="amber"
+        tooltip="Densidad de cotización: porcentaje de afiliados registrados que aportan mes a mes."
+      />
+
+      <KpiCard
+        titulo="Rentabilidad Real 5 Años"
+        valor={`${KPI_SISTEMA.rentabilidadReal5aPonderada.toFixed(2).replace('.', ',')}%`}
+        subtitulo={`Comisión anual sobre saldo: ${KPI_SISTEMA.comisionPromedio.toFixed(2)}%`}
+        badge="Neta Inflación"
+        badgeColor="emerald"
+        tooltip="Tasa geométrica anualizada ponderada del sistema descontando la inflación oficial del IPC."
+      />
+    </div>
+  </section>
+
+  <!-- Cuota de Mercado del ROP y las 6 Operadoras -->
+  <section class="py-6">
+    <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <span class="text-xs font-bold text-[#0A2540] uppercase tracking-wider block mb-1">Concentración de Mercado</span>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900">
+            Participación de las 6 Operadoras de Pensiones (OPCs)
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Distribución del patrimonio del Régimen Obligatorio de Pensión Complementaria (ROP).
+          </p>
+        </div>
+
+        <a href="/rendimientos" class="text-xs text-[#0A2540] hover:underline font-bold flex items-center gap-1">
+          <span>Comparar rentabilidad y costos</span>
+          <span>→</span>
+        </a>
+      </div>
+
+      <!-- Barra de distribución porcentual -->
+      <div class="h-6 w-full rounded-xl overflow-hidden flex bg-slate-100 p-1 border border-slate-200 gap-0.5 mb-6">
+        {OPERADORAS.map((opc) => (
+          <div
+            style={`width: ${opc.cuotaMercado}%; background-color: ${opc.colorHex};`}
+            class="h-full rounded-sm transition-all hover:opacity-80"
+            title={`${opc.nombre}: ${opc.cuotaMercado}%`}
+          ></div>
+        ))}
+      </div>
+
+      <!-- Tarjetas de las 6 Operadoras -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {OPERADORAS.map((opc) => {
+          const rent = RENTABILIDADES.find(r => r.operadoraId === opc.id);
+          return (
+            <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 hover:border-slate-300 hover:bg-white transition-all flex flex-col justify-between shadow-2xs">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <OpdBadge operadoraId={opc.id} />
+                  <span class="text-xs font-bold text-slate-900 tabular-nums bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs">
+                    {opc.cuotaMercado}% mercado
+                  </span>
+                </div>
+                <p class="text-xs text-slate-600 leading-snug line-clamp-2 mt-1">
+                  {opc.descripcion}
+                </p>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                <span class="text-slate-500 font-medium">Rent. Real 5A:</span>
+                <strong class="text-[#134E3F] font-bold tabular-nums">
+                  {rent ? `${rent.rentabilidadReal60m.toFixed(2).replace('.', ',')}%` : 'N/D'}
+                </strong>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- Simulador Previsional Interactivo Incorporado -->
+  <section class="py-4">
+    <InteractiveSimulator />
+  </section>
+
+  <!-- Arquitectura Multipilar de Costa Rica -->
+  <section class="py-8">
+    <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+      <div class="max-w-3xl mb-8">
+        <span class="text-xs font-bold text-[#0A2540] uppercase tracking-wider block mb-1">Marco Institucional</span>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900">
+          La Arquitectura Multipilar del Sistema Previsional (Ley 7983)
+        </h2>
+        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+          En Costa Rica, tu pensión se construye a partir de 4 componentes que se complementan entre sí para garantizar un ingreso digno al envejecer:
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Pilar 0 -->
+        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
+          <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pilar 0</div>
+          <h3 class="text-base font-bold text-slate-900 mb-2">Régimen No Contributivo (RNC)</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            De naturaleza asistencial para personas en pobreza extrema y sin pensión previa. Administrado por la CCSS con fondos de FODESAF.
+          </p>
+        </div>
+
+        <!-- Pilar 1 -->
+        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
+          <div class="text-[11px] font-bold text-[#0A2540] uppercase tracking-wider mb-1">Pilar 1 (Básico)</div>
+          <h3 class="text-base font-bold text-slate-900 mb-2">IVM, Magisterio y Poder Judicial</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Reparto solidario / beneficio definido. Aporta entre el 43% y 50% del salario de referencia (tasa de reemplazo).
+          </p>
+        </div>
+
+        <!-- Pilar 2 -->
+        <div class="bg-blue-50/70 border border-blue-200 p-5 rounded-2xl relative shadow-2xs">
+          <span class="absolute top-3 right-3 text-[10px] font-bold bg-[#0A2540] text-white px-2 py-0.5 rounded-full">Foco Principal</span>
+          <div class="text-[11px] font-bold text-[#0A2540] uppercase tracking-wider mb-1">Pilar 2 (Obligatorio)</div>
+          <h3 class="text-base font-bold text-slate-900 mb-2">ROP & FCL (Capitalización)</h3>
+          <p class="text-xs text-slate-700 leading-relaxed">
+            4.25% mensual obligatorio administrado por las OPCs en cuentas individuales. Diseñado para complementar el IVM hasta un ~65-75% del salario.
+          </p>
+        </div>
+
+        <!-- Pilar 3 -->
+        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
+          <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1">Pilar 3 (Voluntario)</div>
+          <h3 class="text-base font-bold text-slate-900 mb-2">Planes Voluntarios (RVPC)</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Ahorro individual o colectivo en colones y dólares, 100% deducible del impuesto sobre la renta hasta el 10% del salario bruto.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Accesos Rápidos a Módulos Analíticos -->
+  <section class="py-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <a href="/rendimientos" class="group bg-white border border-slate-200 p-5 rounded-2xl hover:border-[#0A2540] hover:shadow-sm transition-all">
+        <span class="text-2xl mb-2 block">📈</span>
+        <h3 class="text-sm font-bold text-slate-900 group-hover:text-[#0A2540] transition-colors">Ranking de Rendimientos</h3>
+        <p class="text-xs text-slate-500 mt-1">Semáforo de rentabilidad real neta a 36 y 60 meses contra inflación.</p>
+      </a>
+
+      <a href="/comisiones" class="group bg-white border border-slate-200 p-5 rounded-2xl hover:border-[#0A2540] hover:shadow-sm transition-all">
+        <span class="text-2xl mb-2 block">💰</span>
+        <h3 class="text-sm font-bold text-slate-900 group-hover:text-[#0A2540] transition-colors">Comisiones & Fee Drag</h3>
+        <p class="text-xs text-slate-500 mt-1">Calcula el costo del cobro de administración tras 35 años de trabajo.</p>
+      </a>
+
+      <a href="/portafolios" class="group bg-white border border-slate-200 p-5 rounded-2xl hover:border-[#0A2540] hover:shadow-sm transition-all">
+        <span class="text-2xl mb-2 block">🌐</span>
+        <h3 class="text-sm font-bold text-slate-900 group-hover:text-[#0A2540] transition-colors">Portafolios & ISIN</h3>
+        <p class="text-xs text-slate-500 mt-1">Monitorea la deuda soberana de Hacienda y títulos internacionales.</p>
+      </a>
+
+      <a href="/transferencias" class="group bg-white border border-slate-200 p-5 rounded-2xl hover:border-[#0A2540] hover:shadow-sm transition-all">
+        <span class="text-2xl mb-2 block">🔄</span>
+        <h3 class="text-sm font-bold text-slate-900 group-hover:text-[#0A2540] transition-colors">Movilidad de Afiliados</h3>
+        <p class="text-xs text-slate-500 mt-1">Traspasos bilaterales y tasa neta de migración entre operadoras.</p>
+      </a>
+    </div>
+  </section>
+</BaseLayout>

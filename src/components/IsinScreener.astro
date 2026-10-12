@@ -1,0 +1,117 @@
+---
+import { TITULOS_ISIN_DESTACADOS, OPERADORAS } from '../data/supen-data';
+import { formatColones, formatDolares } from '../utils/formatters';
+---
+
+<div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0A2540] text-xs font-bold mb-2">
+        <span>🔍 Explorador Granular de Títulos</span>
+        <span>•</span>
+        <span>Endpoint /portafolioISIN</span>
+      </div>
+      <h3 class="text-xl sm:text-2xl font-black text-slate-900">
+        Buscador de Títulos e Instrumentos por Código ISIN
+      </h3>
+      <p class="text-xs text-slate-500 mt-1">
+        Inspecciona los títulos de deuda pública costarricense y activos extranjeros en posesión de los fondos de pensiones.
+      </p>
+    </div>
+
+    <!-- Barra de Búsqueda -->
+    <div class="w-full sm:w-72">
+      <div class="relative">
+        <input
+          id="isin-search-input"
+          type="text"
+          placeholder="Buscar por ISIN, emisor o bono..."
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 pl-9 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A2540] font-medium"
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Títulos -->
+  <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+    <table class="w-full text-left text-xs">
+      <thead>
+        <tr class="bg-slate-50 border-b-2 border-slate-200 text-slate-700">
+          <th class="py-3 px-3 font-bold">Código ISIN</th>
+          <th class="py-3 px-3 font-bold">Descripción / Emisor</th>
+          <th class="py-3 px-3 font-bold">Sector</th>
+          <th class="py-3 px-3 font-bold">Vencimiento</th>
+          <th class="py-3 px-3 font-bold text-right">Valor Cartera (₡)</th>
+          <th class="py-3 px-3 font-bold text-center">Tenencias OPCs</th>
+        </tr>
+      </thead>
+      <tbody id="isin-table-body" class="divide-y divide-slate-100 tabular-nums">
+        {TITULOS_ISIN_DESTACADOS.map((titulo) => (
+          <tr class="hover:bg-slate-50/80 transition-colors isin-row" data-search={`${titulo.isin} ${titulo.descripcion} ${titulo.emisor} ${titulo.sector}`}>
+            <td class="py-3.5 px-3 font-mono font-bold text-[#0A2540]">
+              {titulo.isin}
+              <span class="block text-[10px] font-sans font-medium text-slate-500">{titulo.moneda}</span>
+            </td>
+            <td class="py-3.5 px-3">
+              <strong class="text-slate-900 block font-bold">{titulo.descripcion}</strong>
+              <span class="text-slate-500 text-[11px] font-medium">{titulo.emisor} · {titulo.tasaInteres}</span>
+            </td>
+            <td class="py-3.5 px-3">
+              <span class={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                titulo.sector === 'PÚBLICO'
+                  ? 'bg-blue-50 text-[#0A2540] border-blue-200'
+                  : 'bg-emerald-50 text-emerald-900 border-emerald-200'
+              }`}>
+                {titulo.sector}
+              </span>
+            </td>
+            <td class="py-3.5 px-3 text-slate-700 font-medium">
+              {titulo.vencimiento}
+            </td>
+            <td class="py-3.5 px-3 text-right">
+              <strong class="text-slate-900 font-black block">{formatColones(titulo.montoTotalCRC, true)}</strong>
+              <span class="text-[11px] text-slate-500 font-medium">{formatDolares(titulo.montoTotalUSD, true)}</span>
+            </td>
+            <td class="py-3.5 px-3 text-center">
+              <details class="cursor-pointer inline-block text-left">
+                <summary class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] text-slate-700 font-semibold transition-colors list-none select-none border border-slate-200">
+                  Ver 6 OPCs ▾
+                </summary>
+                <div class="mt-2 p-3 bg-white border border-slate-200 rounded-xl shadow-xl w-64 space-y-1.5 z-10 relative">
+                  <div class="text-[10px] font-bold text-slate-500 uppercase border-b border-slate-100 pb-1">
+                    Tenencia de cada operadora:
+                  </div>
+                  {Object.entries(titulo.tenenciasOpcs).map(([opcKey, monto]) => {
+                    const opcInfo = OPERADORAS.find(o => o.id === opcKey);
+                    return (
+                      <div class="flex justify-between text-[11px]">
+                        <span class="text-slate-600 font-medium">{opcInfo?.nombreCorto || opcKey}:</span>
+                        <strong class="text-slate-900 font-bold">{formatColones(monto, true)}</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const searchInput = document.getElementById('isin-search-input') as HTMLInputElement;
+  const rows = document.querySelectorAll('.isin-row') as NodeListOf<HTMLTableRowElement>;
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      rows.forEach(row => {
+        const text = (row.getAttribute('data-search') || '').toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+  }
+</script>

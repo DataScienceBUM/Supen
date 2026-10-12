@@ -1,0 +1,94 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ApiExplorer from '../components/ApiExplorer.astro';
+---
+
+<BaseLayout
+  title="API OpenData y Desarrolladores | SUPEN Costa Rica"
+  description="Especificación técnica de la API REST pública de la Superintendencia de Pensiones de Costa Rica, diccionarios de datos, catálogos maestros y ejemplos en Python y R."
+>
+  <div class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold mb-3">
+      <span>⚡ Portal para Desarrolladores & Opendata</span>
+      <span>•</span>
+      <span>REST / JSON Público</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+      Documentación y Consola de la API de Estadísticas SUPEN
+    </h1>
+    <p class="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed">
+      La Superintendencia de Pensiones publica un API REST pública, abierta y gratuita sin necesidad de tokens o API keys. Integra estadísticas de rentabilidades, comisiones, carteras de inversión, movilidad y demografía en tus aplicaciones, modelos de datos o investigaciones.
+    </p>
+  </div>
+
+  <!-- Consola Interactiva -->
+  <section class="mb-12">
+    <ApiExplorer />
+  </section>
+
+  <!-- Catálogos Maestros de Referencia -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+    <!-- Catálogo de Fondos -->
+    <div class="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-sm">
+      <h3 class="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+        <span>Catálogo Maestro de Fondos (<code>codigofondo</code>)</span>
+      </h3>
+      <div class="overflow-x-auto text-xs bg-slate-50 border border-slate-200 rounded-xl p-2">
+        <table class="w-full text-left font-mono text-[11px]">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500 pb-1">
+              <th class="py-2 px-2 font-sans font-bold">Código</th>
+              <th class="py-2 px-2 font-sans font-bold">Nombre Oficial</th>
+              <th class="py-2 px-2 font-sans font-bold">Pilar</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200/60 text-slate-800">
+            <tr><td class="py-2 px-2 text-[#0A2540] font-black">ROP</td><td class="py-2 px-2 font-sans font-medium">Régimen Obligatorio Complementario</td><td class="py-2 px-2 font-sans font-bold text-blue-900">Pilar 2</td></tr>
+            <tr><td class="py-2 px-2 text-[#0A2540] font-black">FCL</td><td class="py-2 px-2 font-sans font-medium">Fondo de Capitalización Laboral</td><td class="py-2 px-2 font-sans font-bold text-blue-900">Pilar 2</td></tr>
+            <tr><td class="py-2 px-2 text-emerald-800 font-black">VOLCA</td><td class="py-2 px-2 font-sans font-medium">Régimen Voluntario Fondos A Colones</td><td class="py-2 px-2 font-sans font-bold text-emerald-900">Pilar 3</td></tr>
+            <tr><td class="py-2 px-2 text-emerald-800 font-black">VOLDA</td><td class="py-2 px-2 font-sans font-medium">Régimen Voluntario Fondos A Dólares</td><td class="py-2 px-2 font-sans font-bold text-emerald-900">Pilar 3</td></tr>
+            <tr><td class="py-2 px-2 text-emerald-800 font-black">VOLCB</td><td class="py-2 px-2 font-sans font-medium">Voluntario Colectivo Fondos B Colones</td><td class="py-2 px-2 font-sans font-bold text-emerald-900">Pilar 3</td></tr>
+            <tr><td class="py-2 px-2 text-amber-900 font-black">BASI</td><td class="py-2 px-2 font-sans font-medium">Regímenes Básicos (IVM / Magisterio)</td><td class="py-2 px-2 font-sans font-bold text-amber-950">Pilar 1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Catálogo de Cuentas Contables Clave -->
+    <div class="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-sm">
+      <h3 class="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+        <span>Cuentas Contables Principales (<code>/Cuenta</code>)</span>
+      </h3>
+      <div class="overflow-x-auto text-xs bg-slate-50 border border-slate-200 rounded-xl p-2">
+        <table class="w-full text-left font-mono text-[11px]">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500 pb-1">
+              <th class="py-2 px-2 font-sans font-bold">Código Cuenta</th>
+              <th class="py-2 px-2 font-sans font-bold">Denominación Contable</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200/60 text-slate-800">
+            <tr><td class="py-2 px-2 text-[#0A2540] font-black">0110000000000</td><td class="py-2 px-2 font-sans font-bold text-slate-900">ACTIVO NETO DEL FONDO DE PENSIONES</td></tr>
+            <tr><td class="py-2 px-2 text-emerald-800 font-black">0130000000000</td><td class="py-2 px-2 font-sans font-bold text-[#134E3F]">VALOR CUOTA (NAV DEL FONDO)</td></tr>
+            <tr><td class="py-2 px-2 text-slate-700 font-bold">0210000000000</td><td class="py-2 px-2 font-sans font-medium">ACTIVO TOTAL</td></tr>
+            <tr><td class="py-2 px-2 text-slate-700 font-bold">0212000000000</td><td class="py-2 px-2 font-sans font-medium">INVERSIONES EN INSTRUMENTOS FINANCIEROS</td></tr>
+            <tr><td class="py-2 px-2 text-amber-900 font-bold">0220000000000</td><td class="py-2 px-2 font-sans font-medium">PASIVOS TOTALES</td></tr>
+            <tr><td class="py-2 px-2 text-purple-900 font-bold">0230000000000</td><td class="py-2 px-2 font-sans font-medium">PATRIMONIO DEL FONDO</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Directrices de Optimización y Timeout -->
+  <div class="bg-blue-50/70 border border-blue-200 p-6 rounded-3xl text-xs text-slate-800 space-y-3 shadow-xs">
+    <h3 class="text-sm font-bold text-[#0A2540] flex items-center gap-2">
+      <span>🛡️ Recomendaciones de Rendimiento y Consumo Responsable</span>
+    </h3>
+    <ul class="space-y-1.5 list-disc list-inside text-slate-700 leading-relaxed font-medium">
+      <li><strong>Periodicidad Mensual:</strong> Los datos se actualizan con cortes al último día natural de cada mes (ej. <code>2024-01-31</code>). Consultas diarias intermedias no aportarán nuevos registros.</li>
+      <li><strong>Evitar Timeout 504 en <code>/portafolioISIN</code>:</strong> Este endpoint contiene miles de títulos individuales. <strong>Siempre especifica una fecha puntual</strong> (<code>FechaInicio=2024-01-31&FechaFinal=2024-01-31</code>). Consultar rangos plurianuales causará sobrecarga en el servidor público.</li>
+      <li><strong>Cacheo Local:</strong> Si desarrollas una aplicación ciudadana o modelo cuantitativo, almacena las respuestas localmente tras cada publicación mensual para no depender de la latencia del servidor gubernamental.</li>
+    </ul>
+  </div>
+</BaseLayout>

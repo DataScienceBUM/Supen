@@ -1,0 +1,85 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FeeDragCalculator from '../components/FeeDragCalculator.astro';
+import { HISTORICO_COMISIONES } from '../data/supen-data';
+---
+
+<BaseLayout
+  title="Comisiones y Fee Drag | SUPEN Costa Rica"
+  description="Estructura de comisiones del ROP y FCL, desescalada regulatoria del tope de comisiones de CONASSIF y simulador de fee drag a 35 años."
+>
+  <div class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0A2540] text-xs font-bold mb-3">
+      <span>💰 Tarifas de Administración</span>
+      <span>•</span>
+      <span>Tope Regulatorio CONASSIF</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+      Comisiones de Administración y Costo a Largo Plazo
+    </h1>
+    <p class="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed">
+      En el Régimen Obligatorio de Pensión Complementaria (ROP), las operadoras cobran una comisión anualizada fijada hoy en un tope máximo de <strong>0.35% sobre el saldo administrado</strong>. Conoce la evolución de esta tarifa y cómo impacta tu ahorro final.
+    </p>
+  </div>
+
+  <!-- Comisiones Vigentes por Fondo -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    <div class="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-sm">
+      <div class="text-xs font-bold text-[#0A2540] uppercase tracking-wider mb-1">Régimen Obligatorio (ROP)</div>
+      <h3 class="text-2xl font-black text-[#0A2540]">0.35% Anual</h3>
+      <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+        Tope regulatorio de CONASSIF cobrado diariamente sobre el saldo total administrado del fondo. Todas las 6 OPCs cobran la tarifa tope.
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-sm">
+      <div class="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">Fondo de Capitalización (FCL)</div>
+      <h3 class="text-2xl font-black text-[#134E3F]">~1.50% - 2.00%</h3>
+      <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+        Comisión de administración sobre saldo o rendimientos devengados, autorizada legalmente para cubrir el auxilio de cesantía.
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-sm">
+      <div class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">Planes Voluntarios (RVPC)</div>
+      <h3 class="text-2xl font-black text-amber-950">~0.75% - 1.25%</h3>
+      <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+        Comisiones diferenciadas según moneda (Colones vs. Dólares) y tipo de plan individual o corporativo.
+      </p>
+    </div>
+  </div>
+
+  <!-- Calculadora Fee Drag -->
+  <section class="mb-12">
+    <FeeDragCalculator />
+  </section>
+
+  <!-- Cronología de Desescalada de Comisiones -->
+  <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+    <div class="max-w-2xl mb-6">
+      <h3 class="text-xl font-bold text-slate-900">
+        Historia de la Reducción Regulatoria de Comisiones (2005 - 2024)
+      </h3>
+      <p class="text-xs text-slate-500 mt-1">
+        Cómo los acuerdos de CONASSIF redujeron progresivamente las comisiones de las operadoras para proteger el ahorro de los trabajadores:
+      </p>
+    </div>
+
+    <div class="relative border-l-2 border-slate-200 ml-4 space-y-8 pl-6">
+      {HISTORICO_COMISIONES.map((item) => (
+        <div class="relative group">
+          <div class="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-[#0A2540] border-4 border-white shadow-xs"></div>
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-black text-[#0A2540] font-mono">{item.año}</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#0A2540] font-bold text-xs tabular-nums">
+              Tope: {item.topeNormativo.toFixed(2)}%
+            </span>
+          </div>
+          <p class="text-xs text-slate-700 mt-1 leading-relaxed font-medium">
+            {item.evento}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

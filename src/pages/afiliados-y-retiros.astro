@@ -1,0 +1,128 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { DEMOGRAFIA_AFILIADOS, BENEFICIOS_RETIROS } from '../data/supen-data';
+import { formatColones, formatNumero } from '../utils/formatters';
+---
+
+<BaseLayout
+  title="Demografía Laboral y Retiros | SUPEN Costa Rica"
+  description="Pirámide de afiliados y cotizantes en SICERE, brecha salarial por edad y modalidades de jubilación del ROP bajo los endpoints /Afiliado y /Beneficio."
+>
+  <div class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0A2540] text-xs font-bold mb-3">
+      <span>👥 Demografía y Desacumulación</span>
+      <span>•</span>
+      <span>Endpoints /Afiliado y /Beneficio</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+      Demografía Laboral, Salarios y Modalidades de Retiro
+    </h1>
+    <p class="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed">
+      Analiza la composición de los 3.1 millones de afiliados al sistema, la densidad de cotización efectiva en SICERE y las modalidades elegidas por los costarricenses al momento de jubilarse.
+    </p>
+  </div>
+
+  <!-- Demografía de Afiliados y Cotizantes -->
+  <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm mb-10">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-slate-900">
+          Afiliados Acumulados vs. Cotizantes Efectivos por Edad
+        </h2>
+        <span class="text-xs text-slate-500">Revela la densidad de cotización e intermitencia laboral en Costa Rica</span>
+      </div>
+
+      <div class="flex items-center gap-2 text-xs">
+        <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#0A2540] border border-blue-200 font-bold">
+          Total Afiliados: 3.12M
+        </span>
+        <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 font-bold">
+          Cotizantes Activos: 1.41M
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+      <table class="w-full text-left text-xs">
+        <thead>
+          <tr class="bg-slate-50 border-b-2 border-slate-200 text-slate-700">
+            <th class="py-3 px-3 font-bold">Grupo Etario</th>
+            <th class="py-3 px-3 font-bold text-right">Afiliados Totales</th>
+            <th class="py-3 px-3 font-bold text-right">Cotizantes Activos</th>
+            <th class="py-3 px-3 font-bold text-right">Densidad Cotizante</th>
+            <th class="py-3 px-3 font-bold text-right">Salario Prom. Hombres</th>
+            <th class="py-3 px-3 font-bold text-right">Salario Prom. Mujeres</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 tabular-nums">
+          {DEMOGRAFIA_AFILIADOS.map((d) => (
+            <tr class="hover:bg-slate-50/80 transition-colors">
+              <td class="py-3.5 px-3 font-bold text-slate-900">
+                {d.rangoEdad}
+              </td>
+              <td class="py-3.5 px-3 text-right text-slate-700 font-medium">
+                {formatNumero(d.afiliadosTotal)}
+              </td>
+              <td class="py-3.5 px-3 text-right font-bold text-[#0A2540]">
+                {formatNumero(d.cotizantesEfectivos)}
+              </td>
+              <td class="py-3.5 px-3 text-right">
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 font-black text-[#134E3F] text-[11px]">
+                  {d.porcentajeCotizantes.toFixed(1)}%
+                </span>
+              </td>
+              <td class="py-3.5 px-3 text-right text-slate-800 font-semibold">
+                {formatColones(d.salarioPromedioHombresCRC)}
+              </td>
+              <td class="py-3.5 px-3 text-right text-slate-800 font-semibold">
+                {formatColones(d.salarioPromedioMujeresCRC)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+      💡 <strong>Densidad de Cotización Media (45.3%):</strong> De cada 100 personas inscritas en el ROP, solo 45 aportan activamente cada mes, lo que refleja desempleo transitorio, informalidad laboral o trabajo por cuenta propia.
+    </div>
+  </div>
+
+  <!-- Modalidades de Retiro y Jubilación del ROP -->
+  <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-slate-900">
+        Modalidades de Desembolso y Jubilación del ROP
+      </h2>
+      <p class="text-xs text-slate-500 mt-1">
+        Cómo eligen los jubilados costarricenses recibir su pensión complementaria (Ley N.° 7983 y Ley N.° 9906):
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {BENEFICIOS_RETIROS.map((b) => (
+        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col justify-between shadow-2xs">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-[#0A2540] uppercase tracking-wider">{b.modalidad}</span>
+              <span class="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-[#0A2540] font-bold text-xs tabular-nums">
+                {b.porcentaje}% del total
+              </span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed mb-4 font-normal">
+              {b.descripcion}
+            </p>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs tabular-nums">
+            <span class="text-slate-500 font-medium">{formatNumero(b.cantidadBeneficiarios)} pensionados</span>
+            <div>
+              <span class="text-slate-500 text-[11px] font-medium">Pensión media: </span>
+              <strong class="text-[#134E3F] font-black">{formatColones(b.pensionPromedioMensualCRC)}/mes</strong>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

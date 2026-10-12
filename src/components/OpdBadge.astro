@@ -1,0 +1,35 @@
+---
+interface Props {
+  operadoraId: string;
+  nombre?: string;
+  codigo?: string;
+  tamano?: 'sm' | 'md' | 'lg';
+}
+
+const { operadoraId, nombre, codigo, tamano = 'md' } = Astro.props;
+
+const styles: Record<string, { bg: string; text: string; border: string; dot: string; label: string; code: string }> = {
+  POPULAR: { bg: 'bg-sky-50', text: 'text-sky-950', border: 'border-sky-300', dot: 'bg-sky-600', label: 'Popular Pensiones', code: 'A04' },
+  'BN-VITAL': { bg: 'bg-emerald-50', text: 'text-emerald-950', border: 'border-emerald-300', dot: 'bg-emerald-600', label: 'BN Vital', code: 'A02' },
+  'BCR-PENSION': { bg: 'bg-blue-50', text: 'text-blue-950', border: 'border-blue-300', dot: 'bg-blue-600', label: 'BCR Pensión', code: 'A01' },
+  'BACSJ PENSIONES': { bg: 'bg-rose-50', text: 'text-rose-950', border: 'border-rose-300', dot: 'bg-rose-600', label: 'BAC San José', code: 'A05' },
+  'CCSS-OPC': { bg: 'bg-teal-50', text: 'text-teal-950', border: 'border-teal-300', dot: 'bg-teal-600', label: 'CCSS OPC', code: 'A06' },
+  'VIDA PLENA': { bg: 'bg-amber-50', text: 'text-amber-950', border: 'border-amber-300', dot: 'bg-amber-600', label: 'Vida Plena', code: 'A03' }
+};
+
+const opc = styles[operadoraId] || { bg: 'bg-slate-100', text: 'text-slate-900', border: 'border-slate-300', dot: 'bg-slate-600', label: operadoraId, code: 'N/A' };
+const displayName = nombre || opc.label;
+const displayCode = codigo || opc.code;
+
+const sizeClasses = {
+  sm: 'text-[11px] px-2 py-0.5 gap-1.5',
+  md: 'text-xs px-2.5 py-1 gap-1.5 font-semibold',
+  lg: 'text-sm px-3.5 py-1.5 gap-2 font-bold'
+}[tamano];
+---
+
+<span class={`inline-flex items-center rounded-lg border shadow-2xs ${opc.bg} ${opc.text} ${opc.border} ${sizeClasses}`}>
+  <span class={`w-2 h-2 rounded-full ${opc.dot}`}></span>
+  <span>{displayName}</span>
+  <span class="text-[10px] opacity-70 font-mono font-bold">({displayCode})</span>
+</span>

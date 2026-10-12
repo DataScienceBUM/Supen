@@ -1,0 +1,116 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import OpdBadge from '../components/OpdBadge.astro';
+import { MOVILIDAD_RESUMEN } from '../data/supen-data';
+import { formatColones, formatNumero } from '../utils/formatters';
+---
+
+<BaseLayout
+  title="Libre Transferencia y Movilidad | SUPEN Costa Rica"
+  description="Matriz de traspasos entre operadoras, saldo neto de migración de afiliados y capital transferido bajo el endpoint /LT de SUPEN."
+>
+  <div class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0A2540] text-xs font-bold mb-3">
+      <span>🔄 Dinámica de Traslados</span>
+      <span>•</span>
+      <span>Endpoint /LT</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+      Flujos de Movilidad y Libre Transferencia
+    </h1>
+    <p class="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed">
+      El endpoint <code>/LT</code> de la SUPEN reporta la matriz completa de traspasos de afiliados y recursos entre operadoras. Conoce qué entidades ganan o pierden afiliados cada mes y cómo se mueve el dinero en el mercado.
+    </p>
+  </div>
+
+  <!-- Tabla de Tasa Neta de Migración -->
+  <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm mb-10">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-slate-900">
+          Saldo Neto Mensual de Afiliados y Capital
+        </h2>
+        <span class="text-xs text-slate-500">Entradas vs. Salidas por Operadora (Corte mensual)</span>
+      </div>
+
+      <span class="text-xs text-slate-700 font-mono font-bold px-3 py-1 rounded-lg bg-slate-100 border border-slate-200">
+        Periodo: Enero 2024 · Régimen ROP
+      </span>
+    </div>
+
+    <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+      <table class="w-full text-left text-xs">
+        <thead>
+          <tr class="bg-slate-50 border-b-2 border-slate-200 text-slate-700">
+            <th class="py-3 px-3 font-bold">Operadora</th>
+            <th class="py-3 px-3 font-bold text-right">Afiliados Entrantes</th>
+            <th class="py-3 px-3 font-bold text-right">Afiliados Salientes</th>
+            <th class="py-3 px-3 font-bold text-right">Saldo Neto (Personas)</th>
+            <th class="py-3 px-3 font-bold text-right">Monto Recibido</th>
+            <th class="py-3 px-3 font-bold text-right">Monto Cedido</th>
+            <th class="py-3 px-3 font-bold text-right">Saldo Neto (₡ Capital)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 tabular-nums">
+          {MOVILIDAD_RESUMEN.map((item) => {
+            const esGanador = item.saldoNetoPersonas >= 0;
+            const badgeClass = esGanador
+              ? 'text-emerald-950 bg-emerald-50 border-emerald-300'
+              : 'text-rose-950 bg-rose-50 border-rose-300';
+
+            return (
+              <tr class="hover:bg-slate-50/80 transition-colors">
+                <td class="py-3.5 px-3">
+                  <OpdBadge operadoraId={item.operadoraId} />
+                </td>
+                <td class="py-3.5 px-3 text-right text-slate-700 font-semibold">
+                  +{formatNumero(item.entradasPersonas)}
+                </td>
+                <td class="py-3.5 px-3 text-right text-slate-500 font-medium">
+                  -{formatNumero(item.salidasPersonas)}
+                </td>
+                <td class="py-3.5 px-3 text-right font-bold">
+                  <span class={`px-2 py-0.5 rounded-full border text-[11px] font-bold ${badgeClass}`}>
+                    {esGanador ? '+' : ''}{formatNumero(item.saldoNetoPersonas)}
+                  </span>
+                </td>
+                <td class="py-3.5 px-3 text-right text-slate-700 font-medium">
+                  {formatColones(item.entradasMontoCRC, true)}
+                </td>
+                <td class="py-3.5 px-3 text-right text-slate-500 font-medium">
+                  {formatColones(item.salidasMontoCRC, true)}
+                </td>
+                <td class={`py-3.5 px-3 text-right font-black ${esGanador ? 'text-[#134E3F]' : 'text-rose-700'}`}>
+                  {esGanador ? '+' : ''}{formatColones(item.saldoNetoMontoCRC, true)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Análisis Conductual y Regulación -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white border border-slate-200 p-6 rounded-3xl shadow-xs">
+      <h3 class="text-base font-bold text-slate-900 mb-2">
+        ¿Por qué Popular Pensiones suele ser Cedente Neta?
+      </h3>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Por mandato de la Ley N.° 7983, todos los nuevos trabajadores que ingresan al mercado laboral y no seleccionan activamente una operadora en SICERE son <strong>asignados por defecto a Popular Pensiones</strong>. Con el paso de los años, cuando estos trabajadores contratan productos bancarios o buscan mayor rentabilidad, migran hacia las restantes 5 operadoras.
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-200 p-6 rounded-3xl shadow-xs">
+      <h3 class="text-base font-bold text-slate-900 mb-2">
+        Reglas de Libre Transferencia
+      </h3>
+      <ul class="text-xs text-slate-600 space-y-2 leading-relaxed">
+        <li>• <strong>Gratuidad Total:</strong> Las operadoras tienen prohibido cobrar cualquier comisión de salida o penalización.</li>
+        <li>• <strong>Periodo de Permanencia:</strong> Debes cumplir al menos 6 meses calendario en tu operadora actual antes de solicitar un nuevo traslado.</li>
+        <li>• <strong>Trámite 100% Digital:</strong> Puede realizarse en la oficina virtual de SICERE con Firma Digital o credenciales oficiales de la CCSS.</li>
+      </ul>
+    </div>
+  </div>
+</BaseLayout>

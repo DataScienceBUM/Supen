@@ -1,0 +1,226 @@
+---
+---
+
+<div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+  <div class="max-w-2xl mb-6">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-950 text-xs font-bold mb-3">
+      <span>📉 Interés Compuesto Negativo</span>
+      <span>•</span>
+      <span>Fee Drag Calculator</span>
+    </div>
+    <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+      El Impacto de las Comisiones en 35 Años
+    </h2>
+    <p class="text-slate-600 text-sm mt-2 leading-relaxed">
+      Aunque el 0.35% sobre saldo parece una cifra pequeña, el interés compuesto a lo largo de décadas absorbe una porción considerable de tu pensión futura. Observa la diferencia entre la comisión actual (0.35%) y la histórica (1.10%).
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+    <!-- Controles -->
+    <div class="lg:col-span-5 space-y-5 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+      <div>
+        <div class="flex justify-between text-xs mb-1.5">
+          <label class="font-semibold text-slate-700">Años de vida laboral activa:</label>
+          <span id="fd-anios-display" class="font-bold text-[#0A2540] tabular-nums text-sm">35 años</span>
+        </div>
+        <input
+          id="fd-anios-slider"
+          type="range"
+          min="10"
+          max="40"
+          value="35"
+          class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0A2540]"
+        />
+      </div>
+
+      <div>
+        <div class="flex justify-between text-xs mb-1.5">
+          <label class="font-semibold text-slate-700">Salario mensual promedio:</label>
+          <span id="fd-salario-display" class="font-bold text-[#0A2540] tabular-nums text-sm">₡ 750.000</span>
+        </div>
+        <input
+          id="fd-salario-slider"
+          type="range"
+          min="350000"
+          max="3000000"
+          step="50000"
+          value="750000"
+          class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0A2540]"
+        />
+        <span class="text-[11px] text-slate-500 block mt-1">Aporte ROP mensual: 4.25% del salario</span>
+      </div>
+
+      <div>
+        <div class="flex justify-between text-xs mb-1.5">
+          <label class="font-semibold text-slate-700">Rendimiento anual antes de comisión:</label>
+          <span id="fd-rent-display" class="font-bold text-[#0A2540] tabular-nums text-sm">7.50%</span>
+        </div>
+        <input
+          id="fd-rent-slider"
+          type="range"
+          min="4"
+          max="11"
+          step="0.25"
+          value="7.5"
+          class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0A2540]"
+        />
+      </div>
+    </div>
+
+    <!-- Resultados Comparativos en Barras -->
+    <div class="lg:col-span-7 space-y-4">
+      <!-- Escenario 1: Comisión Cero (Teórico) -->
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-slate-800 font-bold">1. Sin comisión (0.00% comisión):</span>
+          <strong id="fd-saldo-cero" class="text-slate-900 text-sm font-black tabular-nums">₡ 62.450.000</strong>
+        </div>
+        <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+          <div class="bg-blue-600 h-full w-full rounded-full"></div>
+        </div>
+        <span class="text-[11px] text-slate-500 mt-1 block">Riqueza total 100% preservada para el trabajador.</span>
+      </div>
+
+      <!-- Escenario 2: Comisión Actual (0.35%) -->
+      <div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200">
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-emerald-950 font-bold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+            2. Comisión Actual (0.35% sobre saldo):
+          </span>
+          <strong id="fd-saldo-actual" class="text-emerald-900 text-sm font-black tabular-nums">₡ 57.820.000</strong>
+        </div>
+        <div class="w-full bg-emerald-200/60 h-3 rounded-full overflow-hidden">
+          <div id="fd-bar-actual" class="bg-emerald-600 h-full rounded-full" style="width: 92.6%;"></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-600 mt-1 font-medium">
+          <span>Fee Drag: <strong id="fd-drag-actual" class="text-emerald-800 font-bold">~7.4%</strong> absorbido en comisiones</span>
+          <span id="fd-perdida-actual" class="text-slate-800 font-semibold">₡ 4.630.000 pagados a la OPC</span>
+        </div>
+      </div>
+
+      <!-- Escenario 3: Comisión Histórica (1.10%) -->
+      <div class="bg-rose-50/60 p-4 rounded-xl border border-rose-200">
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-rose-950 font-bold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-rose-600"></span>
+            3. Comisión Histórica previa a 2010 (1.10% sobre saldo):
+          </span>
+          <strong id="fd-saldo-hist" class="text-rose-900 text-sm font-black tabular-nums">₡ 48.710.000</strong>
+        </div>
+        <div class="w-full bg-rose-200/60 h-3 rounded-full overflow-hidden">
+          <div id="fd-bar-hist" class="bg-rose-600 h-full rounded-full" style="width: 78.0%;"></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-600 mt-1 font-medium">
+          <span>Fee Drag: <strong id="fd-drag-hist" class="text-rose-800 font-bold">~22.0%</strong> absorbido en comisiones</span>
+          <span id="fd-perdida-hist" class="text-slate-800 font-semibold">₡ 13.740.000 pagados a la OPC</span>
+        </div>
+      </div>
+
+      <!-- Resumen de Ahorro Regulatorio -->
+      <div class="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-slate-800 flex items-center gap-3">
+        <span class="text-xl">🛡️</span>
+        <div>
+          <strong class="text-[#0A2540] font-bold">Ahorro Ciudadano por la Regulación de CONASSIF:</strong>
+          <span class="block text-slate-700 mt-0.5" id="fd-ahorro-regulatorio">
+            La reducción del tope del 1.10% al 0.35% salvaguardó más de <strong>₡ 9.110.000</strong> en el patrimonio de este trabajador.
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const aniosSlider = document.getElementById('fd-anios-slider') as HTMLInputElement;
+  const aniosDisplay = document.getElementById('fd-anios-display') as HTMLElement;
+
+  const salarioSlider = document.getElementById('fd-salario-slider') as HTMLInputElement;
+  const salarioDisplay = document.getElementById('fd-salario-display') as HTMLElement;
+
+  const rentSlider = document.getElementById('fd-rent-slider') as HTMLInputElement;
+  const rentDisplay = document.getElementById('fd-rent-display') as HTMLElement;
+
+  const saldoCero = document.getElementById('fd-saldo-cero') as HTMLElement;
+  const saldoActual = document.getElementById('fd-saldo-actual') as HTMLElement;
+  const saldoHist = document.getElementById('fd-saldo-hist') as HTMLElement;
+
+  const barActual = document.getElementById('fd-bar-actual') as HTMLElement;
+  const barHist = document.getElementById('fd-bar-hist') as HTMLElement;
+
+  const dragActual = document.getElementById('fd-drag-actual') as HTMLElement;
+  const dragHist = document.getElementById('fd-drag-hist') as HTMLElement;
+
+  const perdidaActual = document.getElementById('fd-perdida-actual') as HTMLElement;
+  const perdidaHist = document.getElementById('fd-perdida-hist') as HTMLElement;
+  const ahorroRegulatorio = document.getElementById('fd-ahorro-regulatorio') as HTMLElement;
+
+  function fmtCol(v: number): string {
+    const rounded = Math.round(v);
+    const parts = rounded.toString().split('');
+    let res = '';
+    for (let i = parts.length - 1, count = 0; i >= 0; i--, count++) {
+      if (count > 0 && count % 3 === 0) res = '.' + res;
+      res = parts[i] + res;
+    }
+    return '₡ ' + res;
+  }
+
+  function calcularFeeDrag() {
+    const anios = parseInt(aniosSlider.value);
+    const salario = parseFloat(salarioSlider.value);
+    const rentBruta = parseFloat(rentSlider.value) / 100;
+    const meses = anios * 12;
+    const aporteMensual = salario * 0.0425;
+
+    aniosDisplay.textContent = `${anios} años`;
+    salarioDisplay.textContent = fmtCol(salario);
+    rentDisplay.textContent = `${(rentBruta * 100).toFixed(2).replace('.', ',')}%`;
+
+    // Escenario 1: Sin comisión
+    const rMesCero = Math.pow(1 + rentBruta, 1 / 12) - 1;
+    const fvCero = aporteMensual * ((Math.pow(1 + rMesCero, meses) - 1) / rMesCero);
+
+    // Escenario 2: Con 0.35%
+    const rentActualNet = Math.max(0.001, rentBruta - 0.0035);
+    const rMesActual = Math.pow(1 + rentActualNet, 1 / 12) - 1;
+    const fvActual = aporteMensual * ((Math.pow(1 + rMesActual, meses) - 1) / rMesActual);
+
+    // Escenario 3: Con 1.10%
+    const rentHistNet = Math.max(0.001, rentBruta - 0.0110);
+    const rMesHist = Math.pow(1 + rentHistNet, 1 / 12) - 1;
+    const fvHist = aporteMensual * ((Math.pow(1 + rMesHist, meses) - 1) / rMesHist);
+
+    saldoCero.textContent = fmtCol(fvCero);
+    saldoActual.textContent = fmtCol(fvActual);
+    saldoHist.textContent = fmtCol(fvHist);
+
+    const pctActual = (fvActual / fvCero) * 100;
+    const pctHist = (fvHist / fvCero) * 100;
+
+    barActual.style.width = `${pctActual.toFixed(1)}%`;
+    barHist.style.width = `${pctHist.toFixed(1)}%`;
+
+    const dragAct = 100 - pctActual;
+    const dragH = 100 - pctHist;
+
+    dragActual.textContent = `~${dragAct.toFixed(1).replace('.', ',')}%`;
+    dragHist.textContent = `~${dragH.toFixed(1).replace('.', ',')}%`;
+
+    const difAct = fvCero - fvActual;
+    const difH = fvCero - fvHist;
+
+    perdidaActual.textContent = `${fmtCol(difAct)} en comisiones`;
+    perdidaHist.textContent = `${fmtCol(difH)} en comisiones`;
+
+    const ahorro = fvActual - fvHist;
+    ahorroRegulatorio.innerHTML = `La reducción del tope del 1.10% al 0.35% salvaguardó más de <strong>${fmtCol(ahorro)}</strong> en el patrimonio de este trabajador.`;
+  }
+
+  aniosSlider.addEventListener('input', calcularFeeDrag);
+  salarioSlider.addEventListener('input', calcularFeeDrag);
+  rentSlider.addEventListener('input', calcularFeeDrag);
+
+  calcularFeeDrag();
+</script>

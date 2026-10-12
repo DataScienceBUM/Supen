@@ -1,0 +1,296 @@
+---
+import { OPERADORAS } from '../data/supen-data';
+---
+
+<div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+  <div class="max-w-3xl mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0A2540] text-xs font-bold mb-3">
+      <span>🎯 Simulador Previsional Ciudadano</span>
+      <span>•</span>
+      <span>Ley N.° 7983</span>
+    </div>
+    <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+      Simulador: "¿Cuál OPC Maximiza tu Jubilación?"
+    </h2>
+    <p class="text-slate-600 text-sm mt-2 leading-relaxed">
+      Calcula tu capital proyectado al retiro y tu pensión mensual estimada en el ROP según el rendimiento real histórico de cada una de las 6 operadoras costarricenses.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <!-- Panel de Controles / Inputs -->
+    <div class="lg:col-span-5 space-y-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+      <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-[#0A2540]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+        Tus Datos Laborales
+      </h3>
+
+      <!-- Salario Bruto Mensual -->
+      <div>
+        <div class="flex justify-between text-xs mb-1.5">
+          <label for="salario-slider" class="font-semibold text-slate-700">Salario mensual bruto:</label>
+          <span id="salario-display" class="font-bold text-[#0A2540] tabular-nums text-sm">₡ 750.000</span>
+        </div>
+        <input
+          id="salario-slider"
+          type="range"
+          min="350000"
+          max="3500000"
+          step="25000"
+          value="750000"
+          class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0A2540]"
+        />
+        <span class="text-[11px] text-slate-500 mt-1 block">Aporte ROP obligatorio (4.25%): <strong id="aporte-rop-display" class="text-[#0A2540] font-bold tabular-nums">₡ 31.875/mes</strong></span>
+      </div>
+
+      <!-- Saldo Actual ROP -->
+      <div>
+        <div class="flex justify-between text-xs mb-1.5">
+          <label for="saldo-slider" class="font-semibold text-slate-700">Saldo acumulado en el ROP:</label>
+          <span id="saldo-display" class="font-bold text-[#0A2540] tabular-nums text-sm">₡ 4.500.000</span>
+        </div>
+        <input
+          id="saldo-slider"
+          type="range"
+          min="0"
+          max="30000000"
+          step="250000"
+          value="4500000"
+          class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0A2540]"
+        />
+        <span class="text-[11px] text-slate-500 mt-1 block">Consulta tu saldo en tu estado de cuenta mensual SICERE.</span>
+      </div>
+
+      <!-- Edad Actual y Retiro -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="edad-slider" class="text-xs font-semibold text-slate-700 block mb-1.5">Edad actual:</label>
+          <div class="flex items-center gap-2">
+            <input
+              id="edad-slider"
+              type="number"
+              min="18"
+              max="64"
+              value="32"
+              class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm text-slate-900 font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0A2540]"
+            />
+            <span class="text-xs text-slate-500 font-medium">años</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-700 block mb-1.5">Edad de jubilación:</label>
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              value="65"
+              disabled
+              class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-500 font-bold tabular-nums"
+            />
+            <span class="text-xs text-slate-500 font-medium">años</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Operadora Actual -->
+      <div>
+        <label for="opc-select" class="text-xs font-semibold text-slate-700 block mb-1.5">¿En cuál operadora estás hoy?</label>
+        <select
+          id="opc-select"
+          class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-[#0A2540]"
+        >
+          {OPERADORAS.map((opc) => (
+            <option value={opc.id}>{opc.nombre} ({opc.codigo})</option>
+          ))}
+        </select>
+      </div>
+
+      <div class="p-3 rounded-xl bg-blue-50/80 border border-blue-200 text-[11px] text-slate-700 leading-snug">
+        💡 <strong>Fundamento Metodológico:</strong> Proyección a precios constantes (descontando inflación) basada en el rendimiento real neto a 5 años calculado por SUPEN.
+      </div>
+    </div>
+
+    <!-- Panel de Resultados Comparativos -->
+    <div class="lg:col-span-7 space-y-6">
+      <!-- Tarjeta de Impacto Soberano -->
+      <div id="impact-card" class="bg-gradient-to-br from-[#0A2540] via-[#0E355C] to-[#0A2540] border border-[#0A2540] text-white rounded-2xl p-6 shadow-md">
+        <div class="flex items-center gap-2 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-2">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          Diferencial de Jubilación Acumulado
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mt-1">
+          <div>
+            <span class="text-xs text-slate-200 font-medium">Diferencia entre mejor y menor rendimiento:</span>
+            <div id="diferencial-capital" class="text-3xl sm:text-4xl font-black text-emerald-300 tabular-nums tracking-tight">
+              ₡ 12.840.000
+            </div>
+          </div>
+          <div class="text-left sm:text-right">
+            <span class="text-xs text-slate-200 font-medium">Pensión mensual extra:</span>
+            <div id="diferencial-pension" class="text-xl sm:text-2xl font-black text-amber-200 tabular-nums">
+              + ₡ 58.360/mes
+            </div>
+          </div>
+        </div>
+
+        <p id="mensaje-recomendacion" class="text-xs text-slate-200 mt-3 pt-3 border-t border-blue-900/60 leading-relaxed">
+          Elegir la operadora con mayor rendimiento sostenido a 5 años te permitiría retirarte con un capital sustancialmente mayor para tu vejez.
+        </p>
+      </div>
+
+      <!-- Tabla Comparativa de las 6 OPCs -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+            Proyección a los 65 años por Operadora
+          </h4>
+          <span class="text-[11px] text-slate-500 font-medium">Horizonte: <strong id="horizonte-años" class="text-slate-900 font-bold">33 años</strong></span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-500 pb-2">
+                <th class="py-2.5 font-bold">Operadora</th>
+                <th class="py-2.5 font-bold text-right">Rent. Real 5A</th>
+                <th class="py-2.5 font-bold text-right">Saldo Final Proyectado</th>
+                <th class="py-2.5 font-bold text-right">Pensión Mensual</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-body" class="divide-y divide-slate-100 tabular-nums">
+              <!-- Se puebla dinámicamente con JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <span class="text-slate-500 text-[11px]">
+            ¿Decidiste trasladarte? La <strong>Libre Transferencia</strong> es gratuita tras 6 meses.
+          </span>
+          <a
+            href="https://aissfa.ccss.sa.cr/afiliacion/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-4 py-2 rounded-xl bg-[#0A2540] hover:bg-[#12375C] text-white font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+          >
+            <span>Trámite en SICERE ↗</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { RENTABILIDADES, OPERADORAS } from '../data/supen-data';
+
+  const salarioSlider = document.getElementById('salario-slider') as HTMLInputElement;
+  const salarioDisplay = document.getElementById('salario-display') as HTMLElement;
+  const aporteRopDisplay = document.getElementById('aporte-rop-display') as HTMLElement;
+
+  const saldoSlider = document.getElementById('saldo-slider') as HTMLInputElement;
+  const saldoDisplay = document.getElementById('saldo-display') as HTMLElement;
+
+  const edadSlider = document.getElementById('edad-slider') as HTMLInputElement;
+  const horizonteAños = document.getElementById('horizonte-años') as HTMLElement;
+
+  const diferencialCapital = document.getElementById('diferencial-capital') as HTMLElement;
+  const diferencialPension = document.getElementById('diferencial-pension') as HTMLElement;
+  const rankingBody = document.getElementById('ranking-body') as HTMLElement;
+
+  function fmtColones(val: number): string {
+    const rounded = Math.round(val);
+    const parts = rounded.toString().split('');
+    let res = '';
+    for (let i = parts.length - 1, count = 0; i >= 0; i--, count++) {
+      if (count > 0 && count % 3 === 0) res = '.' + res;
+      res = parts[i] + res;
+    }
+    return '₡ ' + res;
+  }
+
+  function calcular() {
+    const salario = parseFloat(salarioSlider.value);
+    const saldoActual = parseFloat(saldoSlider.value);
+    const edad = parseInt(edadSlider.value) || 32;
+    const edadRetiro = 65;
+    const añosRestantes = Math.max(1, edadRetiro - edad);
+    const meses = añosRestantes * 12;
+    const aporteMensual = salario * 0.0425; // 4.25% ROP
+
+    // Actualizar labels
+    salarioDisplay.textContent = fmtColones(salario);
+    aporteRopDisplay.textContent = `${fmtColones(aporteMensual)}/mes`;
+    saldoDisplay.textContent = fmtColones(saldoActual);
+    horizonteAños.textContent = `${añosRestantes} años`;
+
+    // Proyección por cada operadora
+    const resultados = RENTABILIDADES.map(r => {
+      const opc = OPERADORAS.find(o => o.id === r.operadoraId);
+      const tasaAnualReal = r.rentabilidadReal60m / 100; // Tasa real a 5 años
+      const tasaMensual = Math.pow(1 + tasaAnualReal, 1 / 12) - 1;
+
+      // FV = SaldoActual * (1+r)^m + Aporte * [((1+r)^m - 1) / r]
+      const fvSaldoInicial = saldoActual * Math.pow(1 + tasaAnualReal, añosRestantes);
+      const fvAportes = tasaMensual > 0
+        ? aporteMensual * ((Math.pow(1 + tasaMensual, meses) - 1) / tasaMensual)
+        : aporteMensual * meses;
+      const capitalFinal = fvSaldoInicial + fvAportes;
+
+      // Estimación de pensión mensual en Retiro Programado (Factor actuarial estándar SUPEN: 220 meses)
+      const pensionMensual = capitalFinal / 220;
+
+      return {
+        id: r.operadoraId,
+        nombre: opc ? opc.nombreCorto : r.nombre,
+        rentabilidadReal: r.rentabilidadReal60m,
+        capitalFinal,
+        pensionMensual
+      };
+    });
+
+    // Ordenar de mayor a menor capital final
+    resultados.sort((a, b) => b.capitalFinal - a.capitalFinal);
+
+    const mejor = resultados[0];
+    const peor = resultados[resultados.length - 1];
+    const difCapital = mejor.capitalFinal - peor.capitalFinal;
+    const difPension = mejor.pensionMensual - peor.pensionMensual;
+
+    diferencialCapital.textContent = fmtColones(difCapital);
+    diferencialPension.textContent = `+ ${fmtColones(difPension)}/mes`;
+
+    // Renderizar tabla
+    rankingBody.innerHTML = resultados.map((item, idx) => {
+      const esLider = idx === 0;
+      const highlight = esLider ? 'bg-blue-50/70 font-bold text-[#0A2540]' : 'text-slate-800';
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+
+      return `
+        <tr class="hover:bg-slate-50 transition-colors ${highlight}">
+          <td class="py-2.5 flex items-center gap-2">
+            <span class="w-5 text-center text-xs text-slate-500 font-bold">${medal}</span>
+            <span class="${esLider ? 'text-[#0A2540] font-black' : 'font-semibold'}">${item.nombre}</span>
+          </td>
+          <td class="py-2.5 text-right font-bold ${item.rentabilidadReal >= 3.6 ? 'text-emerald-700' : item.rentabilidadReal >= 3.2 ? 'text-[#0A2540]' : 'text-slate-600'}">
+            ${item.rentabilidadReal.toFixed(2).replace('.', ',')}%
+          </td>
+          <td class="py-2.5 text-right font-bold text-slate-900">
+            ${fmtColones(item.capitalFinal)}
+          </td>
+          <td class="py-2.5 text-right font-bold text-[#134E3F]">
+            ${fmtColones(item.pensionMensual)}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  salarioSlider.addEventListener('input', calcular);
+  saldoSlider.addEventListener('input', calcular);
+  edadSlider.addEventListener('input', calcular);
+
+  // Inicializar cálculo inicial
+  calcular();
+</script>

@@ -1,0 +1,54 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'SUPEN Costa Rica | Observatorio y Estadísticas del Sistema Nacional de Pensiones',
+  description = 'Portal abierto de análisis, visualización y estadísticas del Sistema Nacional de Pensiones (SNP) de Costa Rica: ROP, FCL, comisiones, rendimientos, portafolios y API de la Superintendencia de Pensiones.'
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0A2540" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content="es_CR" />
+
+    <!-- Preconnect fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <style>
+      body {
+        font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+      }
+      code, pre, .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+      }
+    </style>
+  </head>
+  <body class="bg-[#F8F9FA] text-slate-900 flex flex-col min-h-screen">
+    <Header />
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

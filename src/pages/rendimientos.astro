@@ -1,0 +1,169 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import OpdBadge from '../components/OpdBadge.astro';
+import { RENTABILIDADES, OPERADORAS } from '../data/supen-data';
+---
+
+<BaseLayout
+  title="Ranking Oficial de Rendimientos | SUPEN Costa Rica"
+  description="Ranking oficial de rentabilidades reales netas a 36 y 60 meses de las 6 operadoras de pensiones costarricenses bajo la metodología del Valor Cuota de SUPEN."
+>
+  <!-- Cabecera -->
+  <div class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0A2540] text-xs font-bold mb-3">
+      <span>📈 Rentabilidad Neta de Comisiones</span>
+      <span>•</span>
+      <span>Metodología SUPEN / CONASSIF</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+      Ranking Oficial de Rentabilidades Previsionales
+    </h1>
+    <p class="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed">
+      En pensiones, el indicador técnico fundamental es la <strong>Rentabilidad Real Neta a 36 y 60 meses</strong>. Al descontar la inflación (IPC) y deducir la comisión diaria del valor cuota, revela el verdadero poder de compra que cada operadora genera para tu retiro.
+    </p>
+  </div>
+
+  <!-- Tabla Ranking Semáforo -->
+  <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm mb-10">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-slate-900">
+          Tabla Semáforo de Desempeño por Operadora
+        </h2>
+        <span class="text-xs text-slate-500">Ordenada por Rentabilidad Real Anualizada a 5 años (60 Meses)</span>
+      </div>
+
+      <div class="flex items-center gap-3 text-xs">
+        <span class="flex items-center gap-1.5 text-emerald-800 font-bold">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> Cuartil Superior
+        </span>
+        <span class="flex items-center gap-1.5 text-[#0A2540] font-bold">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Promedio
+        </span>
+        <span class="flex items-center gap-1.5 text-amber-900 font-bold">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-600"></span> Inferior
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+      <table class="w-full text-left text-xs">
+        <thead>
+          <tr class="bg-slate-50 border-b-2 border-slate-200 text-slate-700">
+            <th class="py-3 px-3 font-bold">Posición</th>
+            <th class="py-3 px-3 font-bold">Operadora de Pensiones</th>
+            <th class="py-3 px-3 font-bold text-right">Real 60M (5A) ★</th>
+            <th class="py-3 px-3 font-bold text-right">Real 36M (3A)</th>
+            <th class="py-3 px-3 font-bold text-right">Real 12M (1A)</th>
+            <th class="py-3 px-3 font-bold text-right">Nominal 60M</th>
+            <th class="py-3 px-3 font-bold text-right">Comisión Saldo</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 tabular-nums">
+          {RENTABILIDADES.map((item, idx) => {
+            const opc = OPERADORAS.find(o => o.id === item.operadoraId);
+            const semaforoColor = item.calificacionSemaforo === 'alta'
+              ? 'text-[#134E3F] font-black'
+              : item.calificacionSemaforo === 'media'
+              ? 'text-[#0A2540] font-bold'
+              : 'text-amber-950 font-bold';
+
+            const badgeBg = item.calificacionSemaforo === 'alta'
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+              : item.calificacionSemaforo === 'media'
+              ? 'bg-blue-50 border-blue-200 text-[#0A2540]'
+              : 'bg-amber-50 border-amber-200 text-amber-950';
+
+            return (
+              <tr class="hover:bg-slate-50/80 transition-colors">
+                <td class="py-3.5 px-3">
+                  <span class={`inline-flex items-center justify-center w-6 h-6 rounded-full border text-xs font-bold ${badgeBg}`}>
+                    {idx + 1}
+                  </span>
+                </td>
+                <td class="py-3.5 px-3 font-medium">
+                  <div class="flex items-center gap-2">
+                    <OpdBadge operadoraId={item.operadoraId} />
+                    <span class="text-slate-500 text-[11px] hidden md:inline">({opc?.naturaleza})</span>
+                  </div>
+                </td>
+                <td class={`py-3.5 px-3 text-right text-sm ${semaforoColor}`}>
+                  {item.rentabilidadReal60m.toFixed(2).replace('.', ',')}%
+                </td>
+                <td class="py-3.5 px-3 text-right text-slate-800 font-bold">
+                  {item.rentabilidadReal36m.toFixed(2).replace('.', ',')}%
+                </td>
+                <td class="py-3.5 px-3 text-right text-slate-600 font-semibold">
+                  {item.rentabilidadReal12m.toFixed(2).replace('.', ',')}%
+                </td>
+                <td class="py-3.5 px-3 text-right text-slate-500">
+                  {item.rentabilidadNominal60m.toFixed(2).replace('.', ',')}%
+                </td>
+                <td class="py-3.5 px-3 text-right font-bold text-slate-800">
+                  {item.comision.toFixed(2)}%
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+      <span>★ <strong>Estándar Técnico:</strong> La rentabilidad real a 60 meses suaviza shocks cambiarios y de tasas de interés de corto plazo.</span>
+      <span class="text-slate-500 font-medium">Fuente: SUPEN · Endpoint /rendimiento</span>
+    </div>
+  </div>
+
+  <!-- Sección Pedagógica: ¿Cómo se Calcula? -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    <div class="bg-white border border-slate-200 p-6 rounded-3xl shadow-xs">
+      <div class="w-8 h-8 rounded-lg bg-blue-50 text-[#0A2540] flex items-center justify-center font-bold mb-3 border border-blue-200">
+        1
+      </div>
+      <h3 class="text-base font-bold text-slate-900 mb-2">
+        La Ecuación de Fisher (Rentabilidad Real vs Nominal)
+      </h3>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Una rentabilidad nominal del 8% con una inflación del 9% destruye poder adquisitivo (-0.92%). La SUPEN descuenta la inflación oficial del IPC (INEC) mediante la ecuación geométrica de Fisher:
+      </p>
+      <div class="my-3 p-3 rounded-xl bg-slate-50 font-mono text-xs text-[#0A2540] border border-slate-200 font-bold">
+        R_real = (R_nominal - Inflación) / (1 + Inflación)
+      </div>
+      <p class="text-[11px] text-slate-500">
+        Esto garantiza que compares el crecimiento real de tu dinero por encima del costo de la canasta básica.
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-200 p-6 rounded-3xl shadow-xs">
+      <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-900 flex items-center justify-center font-bold mb-3 border border-emerald-200">
+        2
+      </div>
+      <h3 class="text-base font-bold text-slate-900 mb-2">
+        Valor Cuota Promedio Mensual (VC)
+      </h3>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Para evitar que un cierre de mercado puntual a fin de mes distorsione las estadísticas oficiales, la SUPEN promedia el valor cuota de los primeros 30 días naturales de cada mes:
+      </p>
+      <div class="my-3 p-3 rounded-xl bg-slate-50 font-mono text-xs text-emerald-900 border border-slate-200 font-bold">
+        VC_promedio = (1/30) * Σ(VC_d)  [para d = 1..30]
+      </div>
+      <p class="text-[11px] text-slate-500">
+        Dado que la comisión diaria se deduce antes de fijar el valor cuota, <strong>la rentabilidad calculada ya es 100% neta de comisiones</strong>.
+      </p>
+    </div>
+  </div>
+
+  <!-- Lección Histórica: El caso de las Minusvalías de 2022 -->
+  <div class="bg-blue-50/70 border border-blue-200 rounded-3xl p-6 sm:p-8 text-slate-800">
+    <div class="max-w-3xl">
+      <span class="text-xs font-bold text-[#0A2540] uppercase tracking-wider block mb-1">Educación Financiera</span>
+      <h3 class="text-xl font-bold text-slate-900">
+        El Caso de las Minusvalías de 2022: Por qué no Huir en Caídas
+      </h3>
+      <p class="text-xs sm:text-sm text-slate-700 mt-2 leading-relaxed">
+        En 2022, la subida sincronizada de tasas de la Reserva Federal y la fuerte apreciación del colón causaron <strong>minusvalías contables</strong> en los fondos de pensiones. Quienes se asustaron y se trasladaron de operadora consolidaron pérdidas al vender cuotas en su punto más bajo. Quienes permanecieron pacientes vieron cómo en 2023 y 2024 las carteras recuperaron con creces todo el valor perdido, demostrando que <strong>las pensiones son inversiones a 30 años</strong>.
+      </p>
+    </div>
+  </div>
+</BaseLayout>

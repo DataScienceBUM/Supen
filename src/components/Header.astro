@@ -1,0 +1,129 @@
+---
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+  { href: '/', label: 'Panorama' },
+  { href: '/rendimientos', label: 'Rendimientos' },
+  { href: '/comisiones', label: 'Comisiones' },
+  { href: '/portafolios', label: 'Portafolios & ISIN' },
+  { href: '/simulador', label: 'Simulador OPC' },
+  { href: '/transferencias', label: 'Movilidad LT' },
+  { href: '/afiliados-y-retiros', label: 'Demografía & Retiros' },
+  { href: '/api', label: 'API OpenData' },
+  { href: '/glosario', label: 'Glosario' }
+];
+---
+
+<header class="sticky top-0 z-50 transition-all">
+  <!-- Sub-header bar con indicadores oficiales de Costa Rica (Azul Soberano) -->
+  <div class="bg-[#061526] border-b border-slate-800 text-xs py-1.5 px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-slate-300">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0D3F33] text-emerald-300 border border-emerald-800/60 font-semibold text-[11px]">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          Datos Oficiales SUPEN 2024
+        </span>
+        <span class="hidden md:inline text-slate-300 text-[11px]">
+          Superintendencia de Pensiones de Costa Rica · Ley N.° 7983
+        </span>
+      </div>
+
+      <div class="flex items-center gap-4 text-[11px]">
+        <div class="flex items-center gap-1.5 text-slate-300">
+          <span class="text-slate-400">Activos SNP:</span>
+          <strong class="text-white font-semibold tabular-nums">₡27.4 Billones</strong>
+          <span class="text-slate-400">(~30% PIB)</span>
+        </div>
+        <div class="hidden sm:flex items-center gap-1.5 text-slate-300">
+          <span class="text-slate-400">Tipo Cambio Ref. BCCR:</span>
+          <span class="text-amber-300 font-bold tabular-nums">₡513,00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra Principal de Navegación (Blanco Fiduciario) -->
+  <div class="bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logotipo & Marca -->
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 rounded-xl bg-[#0A2540] text-white flex items-center justify-center shadow-xs group-hover:bg-[#12375C] transition-colors">
+            <svg class="w-5 h-5 text-blue-200" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-black text-lg text-[#0A2540] tracking-tight">SUPEN</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#0A2540] border border-blue-200">SNP CR</span>
+            </div>
+            <p class="text-[11px] text-slate-500 font-medium hidden sm:block -mt-0.5">Observatorio del Sistema Nacional de Pensiones</p>
+          </div>
+        </a>
+
+        <!-- Navegación Escritorio -->
+        <nav class="hidden lg:flex items-center gap-1" aria-label="Navegación principal">
+          {navItems.map((item) => {
+            const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
+            return (
+              <a
+                href={item.href}
+                class={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-[#0A2540] text-white shadow-xs'
+                    : 'text-slate-700 hover:text-[#0A2540] hover:bg-slate-100'
+                }`}
+              >
+                {item.label}
+              </a>
+            );
+          })}
+        </nav>
+
+        <!-- Botón Menú Móvil -->
+        <div class="flex items-center gap-2 lg:hidden">
+          <button
+            id="mobile-menu-btn"
+            type="button"
+            class="p-2 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 hover:text-[#0A2540]"
+            aria-label="Abrir menú"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menú Desplegable Móvil -->
+  <div id="mobile-menu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-md">
+    {navItems.map((item) => {
+      const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
+      return (
+        <a
+          href={item.href}
+          class={`block px-3 py-2 rounded-md text-sm font-semibold ${
+            isActive
+              ? 'bg-[#0A2540] text-white'
+              : 'text-slate-700 hover:bg-slate-100 hover:text-[#0A2540]'
+          }`}
+        >
+          {item.label}
+        </a>
+      );
+    })}
+  </div>
+</header>
+
+<script>
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  if (btn && menu) {
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+  }
+</script>

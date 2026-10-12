@@ -1,0 +1,264 @@
+---
+import { API_ENDPOINTS } from '../data/supen-data';
+---
+
+<div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold mb-2">
+        <span>⚡ Explorador Interactivo de Endpoints</span>
+        <span>•</span>
+        <span>OpenAPI / REST</span>
+      </div>
+      <h3 class="text-xl sm:text-2xl font-black text-slate-900">
+        Consola de Pruebas de la API REST de SUPEN
+      </h3>
+      <p class="text-xs text-slate-500 mt-1">
+        Inspecciona los 8 endpoints públicos, parámetros aceptados y esquemas de respuesta JSON.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 text-xs">
+      <span class="text-slate-500 font-medium">URL Base:</span>
+      <code class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[#0A2540] font-mono text-[11px] font-bold">
+        https://webapps.supen.fi.cr/estadisticas/api
+      </code>
+    </div>
+  </div>
+
+  <!-- Selector de Endpoints -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+    {API_ENDPOINTS.map((ep, idx) => (
+      <button
+        type="button"
+        class={`endpoint-tab px-3 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex items-center justify-between ${
+          idx === 0
+            ? 'bg-[#0A2540] border-[#0A2540] text-white shadow-xs'
+            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+        }`}
+        data-endpoint-idx={idx}
+      >
+        <span class="font-mono font-bold text-blue-700">{ep.endpoint}</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 font-bold">GET</span>
+      </button>
+    ))}
+  </div>
+
+  <!-- Detalle del Endpoint Seleccionado -->
+  <div class="bg-slate-50 rounded-2xl border border-slate-200 p-6 space-y-6">
+    <!-- Encabezado del Endpoint -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300 font-mono font-bold text-xs">GET</span>
+          <h4 id="ep-title" class="text-lg font-bold text-slate-900 font-mono">{API_ENDPOINTS[0].endpoint}</h4>
+        </div>
+        <p id="ep-name-desc" class="text-xs text-slate-600 font-medium mt-1">{API_ENDPOINTS[0].nombre} — {API_ENDPOINTS[0].descripcion}</p>
+      </div>
+
+      <button
+        id="btn-copiar-url"
+        type="button"
+        class="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        <span>Copiar cURL</span>
+      </button>
+    </div>
+
+    <!-- Parámetros Query String -->
+    <div>
+      <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Parámetros de Consulta (Query String)</h5>
+      <div class="overflow-x-auto bg-white border border-slate-200 rounded-xl">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 pb-1.5">
+              <th class="py-2 px-3 font-bold">Parámetro</th>
+              <th class="py-2 px-3 font-bold">Tipo</th>
+              <th class="py-2 px-3 font-bold">Requerido</th>
+              <th class="py-2 px-3 font-bold">Descripción</th>
+              <th class="py-2 px-3 font-bold">Ejemplo</th>
+            </tr>
+          </thead>
+          <tbody id="ep-params-body" class="divide-y divide-slate-100 font-mono text-[11px]">
+            {API_ENDPOINTS[0].parametros.map((p) => (
+              <tr>
+                <td class="py-2 px-3 text-[#0A2540] font-bold">{p.nombre}</td>
+                <td class="py-2 px-3 text-slate-700">{p.tipo}</td>
+                <td class="py-2 px-3">
+                  <span class={`px-1.5 py-0.5 rounded text-[10px] font-bold ${p.requerido ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-slate-100 text-slate-600'}`}>
+                    {p.requerido ? 'Sí' : 'Opcional'}
+                  </span>
+                </td>
+                <td class="py-2 px-3 text-slate-700 font-sans">{p.descripcion}</td>
+                <td class="py-2 px-3 text-slate-500">{p.ejemplo}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Alerta de Optimización si aplica -->
+    <div id="ep-alert" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 font-medium hidden">
+      ⚠️ <strong class="text-amber-900 font-bold">Aviso de Rendimiento:</strong> <span id="ep-alert-text"></span>
+    </div>
+
+    <!-- Snippets de Código (Tabs) -->
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Ejemplo de Consumo en Código</h5>
+        <div class="flex gap-1 text-[11px]">
+          <button type="button" class="lang-tab px-2.5 py-1 rounded-md bg-[#0A2540] text-white font-bold" data-lang="python">Python</button>
+          <button type="button" class="lang-tab px-2.5 py-1 rounded-md bg-white border border-slate-300 text-slate-700 font-medium" data-lang="js">JavaScript</button>
+          <button type="button" class="lang-tab px-2.5 py-1 rounded-md bg-white border border-slate-300 text-slate-700 font-medium" data-lang="r">R</button>
+          <button type="button" class="lang-tab px-2.5 py-1 rounded-md bg-white border border-slate-300 text-slate-700 font-medium" data-lang="curl">cURL</button>
+        </div>
+      </div>
+      <div class="relative">
+        <pre id="code-snippet-pre" class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-100 overflow-x-auto"></pre>
+      </div>
+    </div>
+
+    <!-- Payload JSON de Muestra -->
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Respuesta JSON de Muestra</h5>
+        <span class="text-[11px] text-emerald-700 font-mono font-bold">Status: 200 OK · application/json</span>
+      </div>
+      <pre id="ep-json-pre" class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs font-mono text-emerald-400 overflow-x-auto max-h-64"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { API_ENDPOINTS } from '../data/supen-data';
+
+  let currentIdx = 0;
+  let currentLang = 'python';
+
+  const tabs = document.querySelectorAll('.endpoint-tab') as NodeListOf<HTMLButtonElement>;
+  const epTitle = document.getElementById('ep-title') as HTMLElement;
+  const epNameDesc = document.getElementById('ep-name-desc') as HTMLElement;
+  const epParamsBody = document.getElementById('ep-params-body') as HTMLElement;
+  const epAlert = document.getElementById('ep-alert') as HTMLElement;
+  const epAlertText = document.getElementById('ep-alert-text') as HTMLElement;
+  const epJsonPre = document.getElementById('ep-json-pre') as HTMLElement;
+  const codeSnippetPre = document.getElementById('code-snippet-pre') as HTMLElement;
+  const langTabs = document.querySelectorAll('.lang-tab') as NodeListOf<HTMLButtonElement>;
+  const btnCopiar = document.getElementById('btn-copiar-url') as HTMLButtonElement;
+
+  function renderEndpoint(idx: number) {
+    currentIdx = idx;
+    const ep = API_ENDPOINTS[idx];
+
+    // Actualizar tabs visuales
+    tabs.forEach((tab, i) => {
+      if (i === idx) {
+        tab.className = 'endpoint-tab px-3 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex items-center justify-between bg-[#0A2540] border-[#0A2540] text-white shadow-xs';
+      } else {
+        tab.className = 'endpoint-tab px-3 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex items-center justify-between bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300';
+      }
+    });
+
+    epTitle.textContent = ep.endpoint;
+    epNameDesc.textContent = `${ep.nombre} — ${ep.descripcion}`;
+
+    // Parámetros
+    epParamsBody.innerHTML = ep.parametros.map(p => `
+      <tr>
+        <td class="py-2 px-3 text-[#0A2540] font-bold">${p.nombre}</td>
+        <td class="py-2 px-3 text-slate-700">${p.tipo}</td>
+        <td class="py-2 px-3">
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${p.requerido ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-slate-100 text-slate-600'}">
+            ${p.requerido ? 'Sí' : 'Opcional'}
+          </span>
+        </td>
+        <td class="py-2 px-3 text-slate-700 font-sans">${p.descripcion}</td>
+        <td class="py-2 px-3 text-slate-500">${p.ejemplo}</td>
+      </tr>
+    `).join('');
+
+    // Alerta
+    if (ep.consejosOptimizacion) {
+      epAlert.classList.remove('hidden');
+      epAlertText.textContent = ep.consejosOptimizacion;
+    } else {
+      epAlert.classList.add('hidden');
+    }
+
+    // JSON muestra
+    epJsonPre.textContent = JSON.stringify(ep.ejemploRespuesta, null, 2);
+
+    renderCodeSnippet();
+  }
+
+  function renderCodeSnippet() {
+    const ep = API_ENDPOINTS[currentIdx];
+    const url = `https://webapps.supen.fi.cr/estadisticas/api${ep.endpoint}?Fondo=ROP&FechaInicio=2024-01-01&FechaFinal=2024-01-31`;
+
+    if (currentLang === 'python') {
+      codeSnippetPre.textContent = `import requests
+import pandas as pd
+
+url = "${url}"
+headers = {"Accept": "application/json"}
+
+response = requests.get(url, headers=headers)
+data = response.json()
+
+df = pd.DataFrame(data)
+print(df.head())`;
+    } else if (currentLang === 'js') {
+      codeSnippetPre.textContent = `const url = "${url}";
+
+const response = await fetch(url, {
+  headers: { "Accept": "application/json" }
+});
+const data = await response.json();
+console.log(data);`;
+    } else if (currentLang === 'r') {
+      codeSnippetPre.textContent = `library(httr)
+library(jsonlite)
+
+url <- "${url}"
+res <- GET(url, add_headers(Accept = "application/json"))
+data <- fromJSON(content(res, "text"))
+head(data)`;
+    } else {
+      codeSnippetPre.textContent = `curl -X GET "${url}" \\
+  -H "Accept: application/json"`;
+    }
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const idx = parseInt(tab.getAttribute('data-endpoint-idx') || '0');
+      renderEndpoint(idx);
+    });
+  });
+
+  langTabs.forEach(lt => {
+    lt.addEventListener('click', () => {
+      langTabs.forEach(t => t.className = 'lang-tab px-2.5 py-1 rounded-md bg-white border border-slate-300 text-slate-700 font-medium');
+      lt.className = 'lang-tab px-2.5 py-1 rounded-md bg-[#0A2540] text-white font-bold';
+      currentLang = lt.getAttribute('data-lang') || 'python';
+      renderCodeSnippet();
+    });
+  });
+
+  btnCopiar.addEventListener('click', () => {
+    const ep = API_ENDPOINTS[currentIdx];
+    const curl = `curl -X GET "https://webapps.supen.fi.cr/estadisticas/api${ep.endpoint}?Fondo=ROP" -H "Accept: application/json"`;
+    navigator.clipboard.writeText(curl);
+    btnCopiar.innerHTML = `<span>✓ ¡Copiado!</span>`;
+    setTimeout(() => {
+      btnCopiar.innerHTML = `
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        <span>Copiar cURL</span>
+      `;
+    }, 2000);
+  });
+
+  renderEndpoint(0);
+</script>
