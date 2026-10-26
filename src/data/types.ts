@@ -46,6 +46,36 @@ export interface ComisionHistorica {
   evento: string;
 }
 
+export interface ValorCuotaDiario {
+  dia: number;
+  fecha: string; // '2024-01-01'
+  valores: Record<string, number>; // operadoraId -> VC en CRC
+  promedioSistema: number;
+  variacionDiariaPct: number;
+}
+
+export interface RentabilidadMensualPunto {
+  mesId: string; // '2023-02'
+  mesLabel: string; // 'Feb 23'
+  mesNombre: string; // 'Febrero'
+  año: number;
+  valores: Record<string, number>; // operadoraId -> tasa real anualizada en %
+  promedioRealSistema: number;
+  ipcAño: number;
+  activosNetosCRC: number;
+}
+
+export interface SerieAnualHistorica {
+  año: number;
+  valores: Record<string, number>; // operadoraId -> tasa real %
+  promedioRealSistema: number;
+  inflacionAnual: number;
+  activosTotalesCRC: number;
+  comisionTope: number;
+  totalAfiliados: number;
+  hito: string;
+}
+
 export interface PortafolioMacro {
   categoria: string;
   montoCRC: number;

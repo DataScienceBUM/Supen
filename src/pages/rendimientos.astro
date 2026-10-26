@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import OpdBadge from '../components/OpdBadge.astro';
+import YieldTemporalChart from '../components/YieldTemporalChart.astro';
 import { RENTABILIDADES, OPERADORAS } from '../data/supen-data';
 ---
 
@@ -22,6 +23,9 @@ import { RENTABILIDADES, OPERADORAS } from '../data/supen-data';
       En pensiones, el indicador técnico fundamental es la <strong>Rentabilidad Real Neta a 36 y 60 meses</strong>. Al descontar la inflación (IPC) y deducir la comisión diaria del valor cuota, revela el verdadero poder de compra que cada operadora genera para tu retiro.
     </p>
   </div>
+
+  <!-- Observatorio Gráfico con Nivel de Detalle: Días, Meses, Años -->
+  <YieldTemporalChart />
 
   <!-- Tabla Ranking Semáforo -->
   <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm mb-10">
