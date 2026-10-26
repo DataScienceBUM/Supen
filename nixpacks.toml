@@ -1,0 +1,5 @@
+# Configuración de compilación para Dokploy (Nixpacks)
+# Asegura que el contenedor tenga Node.js y Python 3 instalados
+
+[phases.setup]
+nixPkgs = ["nodejs", "python3"]
