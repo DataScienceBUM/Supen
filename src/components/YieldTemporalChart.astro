@@ -1,5 +1,5 @@
 ---
-// Gráfico Temporal Multigranularidad (Días, Meses, Años)
+// Gráfico Temporal Multigranularidad (Días, Meses, Años) con Chart.js
 ---
 
 <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm mb-10" id="yield-temporal-widget">
@@ -27,7 +27,7 @@
           type="button"
           class="ytc-btn px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
           data-gran="dias"
-          title="Ver evolución día a día del Valor Cuota (Enero 2024)"
+          title="Ver evolución día a día del Valor Cuota"
         >
           <span>📅</span>
           <span>Días (31D)</span>
@@ -45,7 +45,7 @@
           type="button"
           class="ytc-btn px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
           data-gran="anios"
-          title="Ver serie histórica anual a 10 años (2015-2024)"
+          title="Ver serie histórica anual a 10 años"
         >
           <span>🗓️</span>
           <span>Años (10A)</span>
@@ -62,37 +62,10 @@
     </div>
   </div>
 
-  <!-- Contenedor del Gráfico SVG Interactivo -->
-  <div class="relative bg-slate-50/70 border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xs overflow-hidden mb-5">
-    <!-- Tooltip Flotante -->
-    <div
-      id="ytc-tooltip"
-      class="absolute pointer-events-none opacity-0 transition-opacity duration-150 z-30 bg-[#061526]/95 backdrop-blur-md border border-slate-700 text-white p-3 rounded-xl shadow-xl text-xs max-w-xs"
-      style="top: 20px; left: 20px;"
-    >
-      <div id="ytc-tooltip-title" class="font-bold text-white text-[13px] border-b border-slate-700 pb-1 mb-1.5 flex items-center justify-between gap-2">
-        <span>Detalle</span>
-      </div>
-      <div id="ytc-tooltip-body" class="space-y-1 text-[11px] text-slate-300"></div>
-    </div>
-
-    <!-- Lienzo SVG Interactivo -->
-    <div class="w-full overflow-x-auto">
-      <svg
-        id="ytc-chart-svg"
-        viewBox="0 0 860 380"
-        class="w-full h-auto min-w-[650px] select-none"
-        preserveAspectRatio="xMidYMid meet"
-        role="img"
-        aria-label="Gráfico de rentabilidad por días, meses y años"
-      >
-        <!-- Generado dinámicamente -->
-      </svg>
-    </div>
-
-    <!-- Leyenda Dinámica -->
-    <div id="ytc-legend" class="flex flex-wrap items-center justify-center gap-4 pt-4 mt-2 border-t border-slate-200 text-xs text-slate-600">
-      <!-- Generado dinámicamente -->
+  <!-- Contenedor del Gráfico con Chart.js -->
+  <div class="bg-slate-50/70 border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xs mb-5">
+    <div class="relative w-full h-[360px] sm:h-[420px]">
+      <canvas id="ytc-chart-canvas"></canvas>
     </div>
   </div>
 
@@ -112,7 +85,7 @@
       </span>
     </div>
     <div class="font-mono text-slate-600 font-medium shrink-0">
-      <span>Fuente: Estadísticas Oficiales SUPEN 2024</span>
+      <span>Fuente: Estadísticas Oficiales SUPEN</span>
     </div>
   </div>
 
@@ -132,6 +105,7 @@
 </div>
 
 <script>
+  import Chart from 'chart.js/auto';
   import {
     OPERADORAS,
     SERIE_DIARIA_VALOR_CUOTA,
@@ -141,65 +115,15 @@
   import { formatColones } from '../utils/formatters';
 
   let currentGran: 'dias' | 'meses' | 'anios' = 'meses';
+  let chartInstance: Chart | null = null;
 
-  const svg = document.getElementById('ytc-chart-svg') as unknown as SVGSVGElement;
-  const tooltip = document.getElementById('ytc-tooltip') as HTMLElement;
-  const tooltipTitle = document.getElementById('ytc-tooltip-title') as HTMLElement;
-  const tooltipBody = document.getElementById('ytc-tooltip-body') as HTMLElement;
-  const legend = document.getElementById('ytc-legend') as HTMLElement;
+  const canvas = document.getElementById('ytc-chart-canvas') as HTMLCanvasElement;
   const kpisGrid = document.getElementById('ytc-kpis-grid') as HTMLElement;
   const methodologyNote = document.getElementById('ytc-methodology-note') as HTMLElement;
   const tableContainer = document.getElementById('ytc-accessible-table-container') as HTMLElement;
   const granButtons = document.querySelectorAll('.ytc-btn') as NodeListOf<HTMLButtonElement>;
 
-  function showTooltip(evt: MouseEvent, titleText: string, rows: { label: string; value: string; color?: string }[]) {
-    tooltipTitle.innerHTML = `<span>${titleText}</span>`;
-    tooltipBody.innerHTML = rows.map(r => `
-      <div class="flex items-center justify-between gap-3">
-        <span class="flex items-center gap-1.5 text-slate-300">
-          ${r.color ? `<span class="w-2 h-2 rounded-full inline-block" style="background-color: ${r.color}"></span>` : ''}
-          ${r.label}
-        </span>
-        <strong class="font-mono text-white tabular-nums">${r.value}</strong>
-      </div>
-    `).join('');
-
-    const rect = svg.getBoundingClientRect();
-    const x = evt.clientX - rect.left + 15;
-    const y = evt.clientY - rect.top - 10;
-
-    tooltip.style.left = `${Math.min(Math.max(10, x), rect.width - 240)}px`;
-    tooltip.style.top = `${Math.min(Math.max(10, y), rect.height - 120)}px`;
-    tooltip.classList.remove('opacity-0');
-    tooltip.classList.add('opacity-100');
-  }
-
-  function hideTooltip() {
-    tooltip.classList.remove('opacity-100');
-    tooltip.classList.add('opacity-0');
-  }
-
-  function attachTooltipListeners() {
-    svg.querySelectorAll('.ytc-chart-elem').forEach(el => {
-      el.addEventListener('mouseenter', (e) => {
-        const title = el.getAttribute('data-tooltip-title') || 'Detalle';
-        const rowsStr = el.getAttribute('data-tooltip-rows') || '[]';
-        try { showTooltip(e as MouseEvent, title, JSON.parse(rowsStr)); } catch {}
-      });
-      el.addEventListener('mousemove', (e) => {
-        const title = el.getAttribute('data-tooltip-title') || 'Detalle';
-        const rowsStr = el.getAttribute('data-tooltip-rows') || '[]';
-        try { showTooltip(e as MouseEvent, title, JSON.parse(rowsStr)); } catch {}
-      });
-      el.addEventListener('mouseleave', hideTooltip);
-    });
-  }
-
-  function renderChart(gran: 'dias' | 'meses' | 'anios') {
-    currentGran = gran;
-    hideTooltip();
-
-    // Actualizar estilos de botones
+  function updateGranularityButtons(gran: 'dias' | 'meses' | 'anios') {
     granButtons.forEach(btn => {
       const g = btn.getAttribute('data-gran');
       if (g === gran) {
@@ -208,101 +132,149 @@
         btn.className = 'ytc-btn px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
       }
     });
+  }
 
-    const paddingX = 80;
-    const paddingY = 40;
-    const width = 860;
-    const height = 380;
-    const chartWidth = width - paddingX * 2;
-    const chartHeight = height - paddingY * 2 - 20;
+  function renderChart(gran: 'dias' | 'meses' | 'anios') {
+    currentGran = gran;
+    updateGranularityButtons(gran);
 
-    let svgInner = '';
+    if (chartInstance) {
+      chartInstance.destroy();
+      chartInstance = null;
+    }
+
+    if (!canvas) return;
 
     if (gran === 'dias') {
       methodologyNote.textContent = 'Metodología oficial SUPEN: El Valor Cuota se calcula diariamente dividiendo el patrimonio entre las cuotas en circulación. La rentabilidad mensual oficial se obtiene promediando aritméticamente los primeros 30 días naturales (Art. SUPEN).';
 
       const diasData = SERIE_DIARIA_VALOR_CUOTA;
-      const minVal = 1080;
-      const maxVal = 1140;
+      const labels = diasData.map(d => `Día ${d.dia}`);
 
-      for (let v = 1080; v <= 1140; v += 10) {
-        const y = height - paddingY - ((v - minVal) / (maxVal - minVal)) * chartHeight;
-        svgInner += `
-          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
-          <text x="${paddingX - 10}" y="${y + 4}" font-size="10" font-weight="600" fill="#64748b" text-anchor="end">₡ ${v}</text>
-        `;
-      }
+      const datasets: any[] = OPERADORAS.map(op => ({
+        label: op.nombreCorto,
+        data: diasData.map(d => d.valores[op.id] ?? null),
+        borderColor: op.colorHex,
+        backgroundColor: op.colorHex,
+        borderWidth: 2,
+        pointRadius: 2.5,
+        pointHoverRadius: 6,
+        tension: 0.15
+      }));
 
-      const yProm = height - paddingY - ((1107.35 - minVal) / (maxVal - minVal)) * chartHeight;
-      svgInner += `
-        <line x1="${paddingX}" y1="${yProm}" x2="${width - paddingX}" y2="${yProm}" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,4" />
-        <text x="${width - paddingX - 6}" y="${yProm - 6}" font-size="10" font-weight="800" fill="#d97706" text-anchor="end">Promedio 30 Días: ₡1.107,35</text>
-      `;
-
-      [1, 5, 10, 15, 20, 25, 31].forEach(dNum => {
-        const x = paddingX + ((dNum - 1) / 30) * chartWidth;
-        svgInner += `
-          <line x1="${x}" y1="${paddingY}" x2="${x}" y2="${height - paddingY}" stroke="#f1f5f9" stroke-width="1" />
-          <text x="${x}" y="${height - paddingY + 20}" font-size="10" font-weight="700" fill="#475569" text-anchor="middle">Día ${dNum}</text>
-        `;
+      // Dataset adicional para el Promedio del Sistema
+      datasets.push({
+        label: 'Promedio Sistema (Art. SUPEN)',
+        data: diasData.map(d => d.promedioSistema),
+        borderColor: '#d97706',
+        backgroundColor: '#d97706',
+        borderWidth: 2,
+        borderDash: [5, 4],
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        tension: 0.15
       });
 
-      OPERADORAS.forEach(op => {
-        const color = op.colorHex;
-        const opId = op.id;
-        const points = diasData.map(d => {
-          const val = d.valores[opId] || 1100;
-          const x = paddingX + ((d.dia - 1) / 30) * chartWidth;
-          const y = height - paddingY - ((val - minVal) / (maxVal - minVal)) * chartHeight;
-          return { x, y, val, dia: d.dia, fecha: d.fecha, varDia: d.variacionDiariaPct };
-        });
+      chartInstance = new Chart(canvas, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                usePointStyle: true,
+                pointStyle: 'circle',
+                boxWidth: 8,
+                boxHeight: 8,
+                padding: 14,
+                font: { size: 11, weight: 'bold' },
+                color: '#475569'
+              }
+            },
+            tooltip: {
+              backgroundColor: '#061526f2',
+              titleColor: '#ffffff',
+              bodyColor: '#e2e8f0',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 12,
+              usePointStyle: true,
+              callbacks: {
+                title: (items) => {
+                  const idx = items[0]?.dataIndex ?? 0;
+                  const item = diasData[idx];
+                  return item ? `Día ${item.dia} · ${item.fecha}` : '';
+                },
+                label: (ctx) => {
+                  const val = ctx.parsed.y;
+                  if (val === null || val === undefined) return '';
+                  return ` ${ctx.dataset.label}: ₡ ${val.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                },
+                footer: (items) => {
+                  const idx = items[0]?.dataIndex ?? 0;
+                  const item = diasData[idx];
+                  if (!item) return '';
+                  const sign = item.variacionDiariaPct >= 0 ? '+' : '';
+                  return `Var. Diaria Sistema: ${sign}${item.variacionDiariaPct.toFixed(2)}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                color: '#64748b',
+                font: { size: 10, weight: 'bold' },
+                maxTicksLimit: 10
+              }
+            },
+            y: {
+              grid: { color: '#e2e8f0' },
+              ticks: {
+                color: '#64748b',
+                font: { size: 10, weight: 'bold' },
+                callback: (val) => `₡ ${Number(val).toLocaleString('es-CR', { maximumFractionDigits: 0 })}`
+              }
+            }
+          }
+        }
+      });
 
-        let pathD = `M ${points[0].x} ${points[0].y}`;
-        for (let i = 1; i < points.length; i++) pathD += ` L ${points[i].x} ${points[i].y}`;
+      // Cálculo dinámico de KPIs para días
+      const lastDay = diasData[diasData.length - 1];
+      const avgPromedio = diasData.length > 0
+        ? diasData.reduce((acc, d) => acc + d.promedioSistema, 0) / diasData.length
+        : 0;
 
-        svgInner += `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
-
-        points.forEach((p, pIdx) => {
-          if (pIdx % 3 === 0 || p.dia === 1 || p.dia === 31) {
-            svgInner += `
-              <circle
-                class="ytc-chart-elem cursor-pointer transition-transform hover:scale-150"
-                cx="${p.x}"
-                cy="${p.y}"
-                r="4"
-                fill="${color}"
-                stroke="#ffffff"
-                stroke-width="1.5"
-                data-tooltip-title="${op.nombreCorto} · Día ${p.dia} (${p.fecha})"
-                data-tooltip-rows='[{"label":"Valor Cuota","value":"₡ ${p.val.toFixed(2)}","color":"${color}"},{"label":"Var. Sistema","value":"${p.varDia >= 0 ? '+' : ''}${p.varDia.toFixed(2)}%"},{"label":"Promedio Sistema","value":"₡ 1.107,35"}]'
-              />
-            `;
+      let topOpName = 'N/A';
+      let topOpVal = 0;
+      if (lastDay) {
+        OPERADORAS.forEach(op => {
+          const val = lastDay.valores[op.id] || 0;
+          if (val > topOpVal) {
+            topOpVal = val;
+            topOpName = op.nombreCorto;
           }
         });
-      });
-
-      legend.innerHTML = `
-        ${OPERADORAS.map(o => `
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full" style="background-color: ${o.colorHex}"></span>
-            <span class="font-medium text-[11px]">${o.nombreCorto}</span>
-          </div>
-        `).join('')}
-        <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3">
-          <span class="w-4 h-0.5 bg-amber-500 inline-block border-t-2 border-dashed border-amber-500"></span>
-          <span class="font-bold text-[11px] text-amber-900">Promedio 30D (Art. SUPEN)</span>
-        </div>
-      `;
+      }
 
       kpisGrid.innerHTML = `
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Muestra Diaria</span>
-          <strong class="text-base sm:text-lg font-black text-slate-900">31 Días</strong>
-          <span class="text-[11px] text-slate-500 block">Enero 2024 (Mes Oficial)</span>
+          <strong class="text-base sm:text-lg font-black text-slate-900">${diasData.length} Días</strong>
+          <span class="text-[11px] text-slate-500 block">Corte Diario Continuo</span>
         </div>
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">VC Promedio Ponderado</span>
-          <strong class="text-base sm:text-lg font-black text-[#0A2540]">₡ 1.107,35</strong>
+          <strong class="text-base sm:text-lg font-black text-[#0A2540]">₡ ${avgPromedio.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
           <span class="text-[11px] text-emerald-800 font-semibold block">Fórmula Art. SUPEN (1/30 Σ)</span>
         </div>
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
@@ -312,8 +284,8 @@
         </div>
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Líder Valor Cuota</span>
-          <strong class="text-base sm:text-lg font-black text-emerald-700">₡ 1.136,20</strong>
-          <span class="text-[11px] text-slate-500 block">BAC San José (+1.41% mes)</span>
+          <strong class="text-base sm:text-lg font-black text-emerald-700">₡ ${topOpVal.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+          <span class="text-[11px] text-slate-500 block">${topOpName}</span>
         </div>
       `;
 
@@ -338,12 +310,12 @@
               <tr class="hover:bg-slate-50">
                 <td class="py-1.5 px-3 font-bold text-slate-900">${d.dia}</td>
                 <td class="py-1.5 px-3 text-slate-500">${d.fecha}</td>
-                <td class="py-1.5 px-3 font-bold text-red-700">${d.valores['BACSJ PENSIONES'].toFixed(2)}</td>
-                <td class="py-1.5 px-3 text-green-700">${d.valores['BN-VITAL'].toFixed(2)}</td>
-                <td class="py-1.5 px-3 text-blue-700">${d.valores['BCR-PENSION'].toFixed(2)}</td>
-                <td class="py-1.5 px-3 text-sky-700">${d.valores['POPULAR'].toFixed(2)}</td>
-                <td class="py-1.5 px-3 text-amber-700">${d.valores['VIDA PLENA'].toFixed(2)}</td>
-                <td class="py-1.5 px-3 text-teal-700">${d.valores['CCSS-OPC'].toFixed(2)}</td>
+                <td class="py-1.5 px-3 font-bold text-red-700">${(d.valores['BACSJ PENSIONES'] ?? 0).toFixed(2)}</td>
+                <td class="py-1.5 px-3 text-green-700">${(d.valores['BN-VITAL'] ?? 0).toFixed(2)}</td>
+                <td class="py-1.5 px-3 text-blue-700">${(d.valores['BCR-PENSION'] ?? 0).toFixed(2)}</td>
+                <td class="py-1.5 px-3 text-sky-700">${(d.valores['POPULAR'] ?? 0).toFixed(2)}</td>
+                <td class="py-1.5 px-3 text-amber-700">${(d.valores['VIDA PLENA'] ?? 0).toFixed(2)}</td>
+                <td class="py-1.5 px-3 text-teal-700">${(d.valores['CCSS-OPC'] ?? 0).toFixed(2)}</td>
                 <td class="py-1.5 px-3 font-bold text-amber-800">${d.promedioSistema.toFixed(2)}</td>
                 <td class="py-1.5 px-3 text-right ${d.variacionDiariaPct >= 0 ? 'text-emerald-800 font-bold' : 'text-rose-600 font-bold'}">${d.variacionDiariaPct >= 0 ? '+' : ''}${d.variacionDiariaPct.toFixed(2)}%</td>
               </tr>
@@ -353,87 +325,144 @@
       `;
 
     } else if (gran === 'meses') {
-      methodologyNote.textContent = 'Evolución mes a mes de la rentabilidad real neta anualizada a lo largo de los últimos 12 cortes mensuales oficiales de la SUPEN (Feb 2023 - Ene 2024), demostrando cómo la desaceleración del IPC impulsó las tasas reales del fondo.';
-
       const mesesData = SERIE_MENSUAL_RENTABILIDAD;
-      const minVal = 3.0;
-      const maxVal = 7.5;
+      const firstMonth = mesesData[0]?.mesNombre ?? '';
+      const lastMonth = mesesData[mesesData.length - 1];
 
-      for (let v = 3.0; v <= 7.0; v += 1.0) {
-        const y = height - paddingY - ((v - minVal) / (maxVal - minVal)) * chartHeight;
-        svgInner += `
-          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
-          <text x="${paddingX - 10}" y="${y + 4}" font-size="10" font-weight="600" fill="#64748b" text-anchor="end">${v.toFixed(1)}%</text>
-        `;
-      }
+      methodologyNote.textContent = `Evolución mes a mes de la rentabilidad real neta anualizada a lo largo de los últimos ${mesesData.length} cortes mensuales oficiales de la SUPEN (${firstMonth} - ${lastMonth?.mesNombre ?? ''}), reflejando el impacto directo del IPC y tasas de mercado en el fondo previsional.`;
 
-      mesesData.forEach((m, mIdx) => {
-        const x = paddingX + (mIdx / (mesesData.length - 1)) * chartWidth;
-        svgInner += `
-          <line x1="${x}" y1="${paddingY}" x2="${x}" y2="${height - paddingY}" stroke="#f1f5f9" stroke-width="1" />
-          <text x="${x}" y="${height - paddingY + 20}" font-size="10" font-weight="700" fill="#334155" text-anchor="middle">${m.mesLabel}</text>
-        `;
+      const labels = mesesData.map(m => m.mesLabel);
+
+      const datasets: any[] = OPERADORAS.map(op => ({
+        label: op.nombreCorto,
+        data: mesesData.map(m => m.valores[op.id] ?? null),
+        borderColor: op.colorHex,
+        backgroundColor: op.colorHex,
+        borderWidth: 2.5,
+        pointRadius: 3.5,
+        pointHoverRadius: 6,
+        tension: 0.25
+      }));
+
+      // Dataset de Promedio Real del Sistema
+      datasets.push({
+        label: 'Promedio Sistema',
+        data: mesesData.map(m => m.promedioRealSistema),
+        borderColor: '#0f766e',
+        backgroundColor: '#0f766e',
+        borderWidth: 2,
+        borderDash: [4, 4],
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        tension: 0.25
       });
 
-      OPERADORAS.forEach(op => {
-        const color = op.colorHex;
-        const opId = op.id;
-        const points = mesesData.map((m, idx) => {
-          const val = m.valores[opId] || 5.0;
-          const x = paddingX + (idx / (mesesData.length - 1)) * chartWidth;
-          const y = height - paddingY - ((val - minVal) / (maxVal - minVal)) * chartHeight;
-          return { x, y, val, mes: m.mesNombre, mesLabel: m.mesLabel, prom: m.promedioRealSistema, ipc: m.ipcAño };
-        });
-
-        let pathD = `M ${points[0].x} ${points[0].y}`;
-        for (let i = 1; i < points.length; i++) pathD += ` L ${points[i].x} ${points[i].y}`;
-
-        svgInner += `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
-
-        points.forEach(p => {
-          svgInner += `
-            <circle
-              class="ytc-chart-elem cursor-pointer transition-transform hover:scale-150"
-              cx="${p.x}"
-              cy="${p.y}"
-              r="4.5"
-              fill="${color}"
-              stroke="#ffffff"
-              stroke-width="2"
-              data-tooltip-title="${op.nombreCorto} · ${p.mes}"
-              data-tooltip-rows='[{"label":"Tasa Real Mensual","value":"${p.val.toFixed(2)}%","color":"${color}"},{"label":"Promedio Sistema","value":"${p.prom.toFixed(2)}%"},{"label":"Inflación IPC","value":"${p.ipc.toFixed(2)}%"}]'
-            />
-          `;
-        });
+      chartInstance = new Chart(canvas, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                usePointStyle: true,
+                pointStyle: 'circle',
+                boxWidth: 8,
+                boxHeight: 8,
+                padding: 14,
+                font: { size: 11, weight: 'bold' },
+                color: '#475569'
+              }
+            },
+            tooltip: {
+              backgroundColor: '#061526f2',
+              titleColor: '#ffffff',
+              bodyColor: '#e2e8f0',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 12,
+              usePointStyle: true,
+              callbacks: {
+                title: (items) => {
+                  const idx = items[0]?.dataIndex ?? 0;
+                  return mesesData[idx]?.mesNombre ?? '';
+                },
+                label: (ctx) => {
+                  const val = ctx.parsed.y;
+                  if (val === null || val === undefined) return '';
+                  return ` ${ctx.dataset.label}: ${val.toFixed(2)}%`;
+                },
+                footer: (items) => {
+                  const idx = items[0]?.dataIndex ?? 0;
+                  const item = mesesData[idx];
+                  if (!item) return '';
+                  return `Promedio Sistema: ${item.promedioRealSistema.toFixed(2)}% | IPC: ${item.ipcAño.toFixed(2)}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                color: '#475569',
+                font: { size: 10, weight: 'bold' }
+              }
+            },
+            y: {
+              grid: { color: '#e2e8f0' },
+              ticks: {
+                color: '#64748b',
+                font: { size: 10, weight: 'bold' },
+                callback: (val) => `${Number(val).toFixed(1)}%`
+              }
+            }
+          }
+        }
       });
 
-      legend.innerHTML = OPERADORAS.map(o => `
-        <div class="flex items-center gap-1.5">
-          <span class="w-3 h-3 rounded-full" style="background-color: ${o.colorHex}"></span>
-          <span class="font-medium text-[11px]">${o.nombreCorto}</span>
-        </div>
-      `).join('');
+      // Cálculo de KPIs dinámicos
+      const lastProm = lastMonth?.promedioRealSistema ?? 0;
+      const lastIpc = lastMonth?.ipcAño ?? 0;
+
+      let bestMonth = mesesData[0];
+      mesesData.forEach(m => {
+        if (!bestMonth || m.promedioRealSistema > bestMonth.promedioRealSistema) {
+          bestMonth = m;
+        }
+      });
+
+      const firstAssets = mesesData[0]?.activosNetosCRC ?? 0;
+      const lastAssets = lastMonth?.activosNetosCRC ?? 0;
+      const growthBillions = ((lastAssets - firstAssets) / 1e12).toFixed(2);
+      const signGrowth = (lastAssets - firstAssets) >= 0 ? '+' : '';
 
       kpisGrid.innerHTML = `
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Ventana Mensual</span>
-          <strong class="text-base sm:text-lg font-black text-slate-900">12 Meses</strong>
-          <span class="text-[11px] text-slate-500 block">Feb 2023 - Ene 2024</span>
+          <strong class="text-base sm:text-lg font-black text-slate-900">${mesesData.length} Meses</strong>
+          <span class="text-[11px] text-slate-500 block">${mesesData[0]?.mesLabel ?? ''} - ${lastMonth?.mesLabel ?? ''}</span>
         </div>
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Tasa Real Media Cierre</span>
-          <strong class="text-base sm:text-lg font-black text-emerald-700">6.04%</strong>
-          <span class="text-[11px] text-emerald-800 font-semibold block">Descontando IPC (-1.87%)</span>
+          <strong class="text-base sm:text-lg font-black text-emerald-700">${lastProm.toFixed(2)}%</strong>
+          <span class="text-[11px] text-emerald-800 font-semibold block">Descontando IPC (${lastIpc.toFixed(2)}%)</span>
         </div>
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
-          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Mes de Mayor Rebote</span>
-          <strong class="text-base sm:text-lg font-black text-blue-600">Nov 2023</strong>
-          <span class="text-[11px] text-slate-500 block">+5.88% tasa del sistema</span>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Mes de Mayor Rendimiento</span>
+          <strong class="text-base sm:text-lg font-black text-blue-600">${bestMonth?.mesLabel ?? 'N/A'}</strong>
+          <span class="text-[11px] text-slate-500 block">+${bestMonth?.promedioRealSistema.toFixed(2)}% tasa del sistema</span>
         </div>
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Crecimiento Patrimonial</span>
-          <strong class="text-base sm:text-lg font-black text-[#0A2540]">+₡ 2.35 B</strong>
-          <span class="text-[11px] text-slate-500 block">De ₡25.10B a ₡27.45B</span>
+          <strong class="text-base sm:text-lg font-black text-[#0A2540]">${signGrowth}₡ ${growthBillions} B</strong>
+          <span class="text-[11px] text-slate-500 block">De ₡${(firstAssets / 1e12).toFixed(1)}B a ₡${(lastAssets / 1e12).toFixed(1)}B</span>
         </div>
       `;
 
@@ -457,12 +486,12 @@
             ${mesesData.map(m => `
               <tr class="hover:bg-slate-50">
                 <td class="py-1.5 px-3 font-bold text-slate-900">${m.mesNombre}</td>
-                <td class="py-1.5 px-3 font-bold text-red-700">${m.valores['BACSJ PENSIONES'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-green-700">${m.valores['BN-VITAL'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-blue-700">${m.valores['BCR-PENSION'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-sky-700">${m.valores['POPULAR'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-amber-700">${m.valores['VIDA PLENA'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-teal-700">${m.valores['CCSS-OPC'].toFixed(2)}%</td>
+                <td class="py-1.5 px-3 font-bold text-red-700">${(m.valores['BACSJ PENSIONES'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-green-700">${(m.valores['BN-VITAL'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-blue-700">${(m.valores['BCR-PENSION'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-sky-700">${(m.valores['POPULAR'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-amber-700">${(m.valores['VIDA PLENA'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-teal-700">${(m.valores['CCSS-OPC'] ?? 0).toFixed(2)}%</td>
                 <td class="py-1.5 px-3 font-bold text-emerald-800">${m.promedioRealSistema.toFixed(2)}%</td>
                 <td class="py-1.5 px-3 text-slate-600">${m.ipcAño.toFixed(2)}%</td>
                 <td class="py-1.5 px-3 text-right font-medium text-slate-700">${formatColones(m.activosNetosCRC, true)}</td>
@@ -473,114 +502,137 @@
       `;
 
     } else {
-      methodologyNote.textContent = 'Perspectiva fiduciaria a 10 años (2015-2024): Las pensiones son inversiones a muy largo plazo. La gráfica demuestra cómo la minusvalía contable temporal de 2022 (-2.15% por subida agresiva de tasas Fed) fue superada con creces en 2023 (+5.95%) y 2024 (+6.04%).';
+      methodologyNote.textContent = 'Perspectiva fiduciaria a 10 años: Las pensiones son inversiones a muy largo plazo. La gráfica demuestra cómo la minusvalía contable temporal de 2022 (-2.15% por subida agresiva de tasas Fed) fue superada con creces en 2023 y 2024 gracias a la maduración de los cupones e inversiones.';
 
       const aniosData = SERIE_ANUAL_HISTORICA;
-      const minVal = -4.0;
-      const maxVal = 10.0;
+      const labels = aniosData.map(a => a.año.toString());
 
-      for (let v = -4.0; v <= 10.0; v += 2.0) {
-        const y = height - paddingY - ((v - minVal) / (maxVal - minVal)) * chartHeight;
-        const isZero = Math.abs(v) < 0.01;
-        svgInner += `
-          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="${isZero ? '#64748b' : '#e2e8f0'}" stroke-width="${isZero ? 2 : 1}" stroke-dasharray="${isZero ? 'none' : '3,3'}" />
-          <text x="${paddingX - 10}" y="${y + 4}" font-size="10" font-weight="${isZero ? '800' : '600'}" fill="${isZero ? '#0f172a' : '#64748b'}" text-anchor="end">${v.toFixed(0)}%</text>
-        `;
-      }
+      const datasets: any[] = OPERADORAS.map(op => ({
+        label: op.nombreCorto,
+        data: aniosData.map(a => a.valores[op.id] ?? null),
+        borderColor: op.colorHex,
+        backgroundColor: op.colorHex,
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        tension: 0.2
+      }));
 
-      const y0 = height - paddingY - ((0 - minVal) / (maxVal - minVal)) * chartHeight;
-      const hNegative = (height - paddingY) - y0;
-      svgInner += `
-        <rect x="${paddingX}" y="${y0}" width="${chartWidth}" height="${hNegative}" fill="#fecdd3" opacity="0.25" />
-        <text x="${paddingX + 15}" y="${y0 + 20}" font-size="10" font-weight="700" fill="#be123c">Zona de Minusvalías Transitorias (Riesgo de Mercado)</text>
-      `;
-
-      aniosData.forEach((a, aIdx) => {
-        const x = paddingX + (aIdx / (aniosData.length - 1)) * chartWidth;
-        svgInner += `
-          <line x1="${x}" y1="${paddingY}" x2="${x}" y2="${height - paddingY}" stroke="#f1f5f9" stroke-width="1" />
-          <text x="${x}" y="${height - paddingY + 20}" font-size="10" font-weight="700" fill="#334155" text-anchor="middle">${a.año}</text>
-        `;
+      // Dataset de Promedio del Sistema Anual
+      datasets.push({
+        label: 'Promedio Sistema',
+        data: aniosData.map(a => a.promedioRealSistema),
+        borderColor: '#475569',
+        backgroundColor: '#475569',
+        borderWidth: 2,
+        borderDash: [4, 4],
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        tension: 0.2
       });
 
-      OPERADORAS.forEach(op => {
-        const color = op.colorHex;
-        const opId = op.id;
-        const points = aniosData.map((a, idx) => {
-          const val = a.valores[opId] || 4.5;
-          const x = paddingX + (idx / (aniosData.length - 1)) * chartWidth;
-          const y = height - paddingY - ((val - minVal) / (maxVal - minVal)) * chartHeight;
-          return { x, y, val, año: a.año, hito: a.hito, activos: a.activosTotalesCRC, inf: a.inflacionAnual };
-        });
-
-        let pathD = `M ${points[0].x} ${points[0].y}`;
-        for (let i = 1; i < points.length; i++) pathD += ` L ${points[i].x} ${points[i].y}`;
-
-        svgInner += `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85" />`;
-
-        points.forEach(p => {
-          svgInner += `
-            <circle
-              class="ytc-chart-elem cursor-pointer transition-transform hover:scale-150"
-              cx="${p.x}"
-              cy="${p.y}"
-              r="4.5"
-              fill="${color}"
-              stroke="#ffffff"
-              stroke-width="1.5"
-              data-tooltip-title="${op.nombreCorto} · Año ${p.año}"
-              data-tooltip-rows='[{"label":"Rentabilidad Real","value":"${p.val.toFixed(2)}%","color":"${color}"},{"label":"Inflación Anual","value":"${p.inf.toFixed(2)}%"},{"label":"Hito","value":"${p.hito}"},{"label":"Activos SNP","value":"₡ ${(p.activos / 1e12).toFixed(1)}B"}]'
-            />
-          `;
-        });
+      chartInstance = new Chart(canvas, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                usePointStyle: true,
+                pointStyle: 'circle',
+                boxWidth: 8,
+                boxHeight: 8,
+                padding: 14,
+                font: { size: 11, weight: 'bold' },
+                color: '#475569'
+              }
+            },
+            tooltip: {
+              backgroundColor: '#061526f2',
+              titleColor: '#ffffff',
+              bodyColor: '#e2e8f0',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 12,
+              usePointStyle: true,
+              callbacks: {
+                title: (items) => {
+                  const idx = items[0]?.dataIndex ?? 0;
+                  const item = aniosData[idx];
+                  return item ? `Año ${item.año} · ${item.hito}` : '';
+                },
+                label: (ctx) => {
+                  const val = ctx.parsed.y;
+                  if (val === null || val === undefined) return '';
+                  return ` ${ctx.dataset.label}: ${val.toFixed(2)}%`;
+                },
+                footer: (items) => {
+                  const idx = items[0]?.dataIndex ?? 0;
+                  const item = aniosData[idx];
+                  if (!item) return '';
+                  return `Inflación: ${item.inflacionAnual.toFixed(2)}% | Activos SNP: ₡${(item.activosTotalesCRC / 1e12).toFixed(1)}B`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                color: '#475569',
+                font: { size: 10, weight: 'bold' }
+              }
+            },
+            y: {
+              grid: {
+                color: (ctx) => (ctx.tick && ctx.tick.value === 0 ? '#475569' : '#e2e8f0'),
+                lineWidth: (ctx) => (ctx.tick && ctx.tick.value === 0 ? 2 : 1)
+              },
+              ticks: {
+                color: '#64748b',
+                font: { size: 10, weight: 'bold' },
+                callback: (val) => `${Number(val).toFixed(0)}%`
+              }
+            }
+          }
+        }
       });
 
-      const x2020 = paddingX + (5 / (aniosData.length - 1)) * chartWidth;
-      const x2022 = paddingX + (7 / (aniosData.length - 1)) * chartWidth;
-      svgInner += `
-        <g transform="translate(${x2020 - 40}, ${paddingY + 10})">
-          <rect width="80" height="22" rx="4" fill="#0A2540" />
-          <text x="40" y="14" font-size="9" font-weight="700" fill="#ffffff" text-anchor="middle">Tope 0.35%</text>
-        </g>
-        <g transform="translate(${x2022 - 50}, ${height - paddingY - 35})">
-          <rect width="100" height="22" rx="4" fill="#be123c" />
-          <text x="50" y="14" font-size="9" font-weight="700" fill="#ffffff" text-anchor="middle">Shock Tasas 2022</text>
-        </g>
-      `;
+      const avgTasa10a = aniosData.length > 0
+        ? aniosData.reduce((acc, a) => acc + a.promedioRealSistema, 0) / aniosData.length
+        : 0;
 
-      legend.innerHTML = `
-        ${OPERADORAS.map(o => `
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full" style="background-color: ${o.colorHex}"></span>
-            <span class="font-medium text-[11px]">${o.nombreCorto}</span>
-          </div>
-        `).join('')}
-        <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3">
-          <span class="w-3.5 h-3.5 rounded bg-rose-200 border border-rose-400 inline-block"></span>
-          <span class="font-medium text-[11px] text-rose-800">Zona Minusvalía</span>
-        </div>
-      `;
+      const firstYrAssets = aniosData[0]?.activosTotalesCRC ?? 1;
+      const lastYrAssets = aniosData[aniosData.length - 1]?.activosTotalesCRC ?? 1;
+      const multFondo = (lastYrAssets / firstYrAssets).toFixed(2);
 
       kpisGrid.innerHTML = `
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Horizonte Histórico</span>
-          <strong class="text-base sm:text-lg font-black text-slate-900">10 Años</strong>
-          <span class="text-[11px] text-slate-500 block">2015 al 2024 (Década ROP)</span>
+          <strong class="text-base sm:text-lg font-black text-slate-900">${aniosData.length} Años</strong>
+          <span class="text-[11px] text-slate-500 block">${aniosData[0]?.año ?? ''} al ${aniosData[aniosData.length - 1]?.año ?? ''}</span>
         </div>
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
-          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Tasa Real 10A Ponderada</span>
-          <strong class="text-base sm:text-lg font-black text-emerald-700">4.15%</strong>
-          <span class="text-[11px] text-emerald-800 font-semibold block">Tasa geométrica anualizada</span>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Tasa Real Media 10A</span>
+          <strong class="text-base sm:text-lg font-black text-emerald-700">${avgTasa10a.toFixed(2)}%</strong>
+          <span class="text-[11px] text-emerald-800 font-semibold block">Promedio simple anual</span>
         </div>
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Resiliencia Shock 2022</span>
           <strong class="text-base sm:text-lg font-black text-indigo-600">100% Recup.</strong>
-          <span class="text-[11px] text-slate-500 block">Minusvalía revertida en 2023</span>
+          <span class="text-[11px] text-slate-500 block">Minusvalía revertida con creces</span>
         </div>
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Multiplicador del Fondo</span>
-          <strong class="text-base sm:text-lg font-black text-[#0A2540]">2.45x</strong>
-          <span class="text-[11px] text-slate-500 block">De ₡11.2B a ₡27.45B</span>
+          <strong class="text-base sm:text-lg font-black text-[#0A2540]">${multFondo}x</strong>
+          <span class="text-[11px] text-slate-500 block">De ₡${(firstYrAssets / 1e12).toFixed(1)}B a ₡${(lastYrAssets / 1e12).toFixed(1)}B</span>
         </div>
       `;
 
@@ -605,12 +657,12 @@
             ${aniosData.map(a => `
               <tr class="hover:bg-slate-50 ${a.promedioRealSistema < 0 ? 'bg-rose-50/50' : ''}">
                 <td class="py-1.5 px-3 font-bold text-slate-900">${a.año}</td>
-                <td class="py-1.5 px-3 font-bold text-red-700">${a.valores['BACSJ PENSIONES'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-green-700">${a.valores['BN-VITAL'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-blue-700">${a.valores['BCR-PENSION'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-sky-700">${a.valores['POPULAR'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-amber-700">${a.valores['VIDA PLENA'].toFixed(2)}%</td>
-                <td class="py-1.5 px-3 text-teal-700">${a.valores['CCSS-OPC'].toFixed(2)}%</td>
+                <td class="py-1.5 px-3 font-bold text-red-700">${(a.valores['BACSJ PENSIONES'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-green-700">${(a.valores['BN-VITAL'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-blue-700">${(a.valores['BCR-PENSION'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-sky-700">${(a.valores['POPULAR'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-amber-700">${(a.valores['VIDA PLENA'] ?? 0).toFixed(2)}%</td>
+                <td class="py-1.5 px-3 text-teal-700">${(a.valores['CCSS-OPC'] ?? 0).toFixed(2)}%</td>
                 <td class="py-1.5 px-3 font-bold ${a.promedioRealSistema < 0 ? 'text-rose-700' : 'text-emerald-800'}">${a.promedioRealSistema.toFixed(2)}%</td>
                 <td class="py-1.5 px-3 text-slate-600">${a.inflacionAnual.toFixed(2)}%</td>
                 <td class="py-1.5 px-3 font-medium text-slate-700">₡ ${(a.activosTotalesCRC / 1e12).toFixed(1)}B</td>
@@ -621,9 +673,6 @@
         </table>
       `;
     }
-
-    svg.innerHTML = svgInner;
-    attachTooltipListeners();
   }
 
   // Delegación de clics en botones de granularidad
@@ -633,7 +682,7 @@
       const btn = (e.target as HTMLElement).closest('.ytc-btn') as HTMLButtonElement;
       if (!btn) return;
       const g = btn.getAttribute('data-gran') as 'dias' | 'meses' | 'anios';
-      if (g) renderChart(g);
+      if (g && g !== currentGran) renderChart(g);
     });
   }
 

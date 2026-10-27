@@ -17,7 +17,7 @@ import type {
 
 // ============================================================================
 // DATASET OFICIAL DEL OBSERVATORIO PREVISIONAL SUPEN (COSTA RICA)
-// Generado automáticamente por: update_supen_data.py
+// Generado automáticamente por: update_supen_data.mjs
 // Fecha de corte oficial: 2026-09-30
 // ============================================================================
 
@@ -66,7 +66,7 @@ export const OPERADORAS: OperadoraInfo[] = [
     "nombre": "BCR Pensión",
     "nombreCorto": "BCR",
     "casaMatriz": "Banco de Costa Rica",
-    "cuotaMercado": 11.0,
+    "cuotaMercado": 11,
     "colorHex": "#2563eb",
     "colorTailwind": "border-blue-500 text-blue-400 bg-blue-950/30",
     "descripcion": "Tercera posición del mercado. Muy consolidada en el sector empresarial e institucional ligado al conglomerado financiero BCR.",
@@ -814,6 +814,11 @@ export const GLOSARIO: GlosarioItem[] = [
 // Según estándar metodológico de la SUPEN / CONASSIF
 // ==========================================
 
+// ==========================================
+// SERIES TEMPORALES MULTI-GRANULARIDAD (DÍAS, MESES, AÑOS)
+// Según estándar metodológico de la SUPEN / CONASSIF
+// ==========================================
+
 export const SERIE_DIARIA_VALOR_CUOTA: ValorCuotaDiario[] = [
   {
     "dia": 1,
@@ -827,7 +832,7 @@ export const SERIE_DIARIA_VALOR_CUOTA: ValorCuotaDiario[] = [
       "VIDA PLENA": 15461.45
     },
     "promedioSistema": 14257.74,
-    "variacionDiariaPct": 0.0
+    "variacionDiariaPct": 0
   },
   {
     "dia": 2,
@@ -910,7 +915,7 @@ export const SERIE_DIARIA_VALOR_CUOTA: ValorCuotaDiario[] = [
       "CCSS-OPC": 15519.24,
       "VIDA PLENA": 15632.96
     },
-    "promedioSistema": 14381.18,
+    "promedioSistema": 14381.19,
     "variacionDiariaPct": 0.07
   },
   {
@@ -919,7 +924,7 @@ export const SERIE_DIARIA_VALOR_CUOTA: ValorCuotaDiario[] = [
     "valores": {
       "POPULAR": 14048.29,
       "BN-VITAL": 13850.83,
-      "BCR-PENSION": 13531.0,
+      "BCR-PENSION": 13531,
       "BACSJ PENSIONES": 13607.37,
       "CCSS-OPC": 15486.36,
       "VIDA PLENA": 15601.52
@@ -981,7 +986,7 @@ export const SERIE_DIARIA_VALOR_CUOTA: ValorCuotaDiario[] = [
       "VIDA PLENA": 15534.64
     },
     "promedioSistema": 14287.66,
-    "variacionDiariaPct": -0.0
+    "variacionDiariaPct": 0
   },
   {
     "dia": 13,
@@ -1212,7 +1217,7 @@ export const SERIE_DIARIA_VALOR_CUOTA: ValorCuotaDiario[] = [
     "fecha": "2026-09-29",
     "valores": {
       "POPULAR": 14226.13,
-      "BN-VITAL": 13965.0,
+      "BN-VITAL": 13965,
       "BCR-PENSION": 13601.06,
       "BACSJ PENSIONES": 13655.48,
       "CCSS-OPC": 15594.65,
